@@ -1,11 +1,39 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, Clock, AlertCircle, TrendingUp, ArrowRight } from 'lucide-react';
+import { 
+  CheckCircle2, 
+  Wallet, 
+  Brain,
+  Plus,
+  MessageSquare,
+  TrendingUp,
+  Calendar
+} from 'lucide-react';
 import Link from 'next/link';
-import { getTodayTasks } from '@/lib/api';
+import { ExpenseBarChart, ExpensePieChart } from '@/components/ExpenseChart';
+
+interface DashboardData {
+  tasks: {
+    total: number;
+    completed: number;
+    completion_rate: number;
+    today: Task[];
+    pending: Task[];
+  };
+  expenses: {
+    total_7_days: number;
+    by_category: Record<string, number>;
+    items: Expense[];
+  };
+  memory: {
+    recent_logs: DailyLog[];
+    preferences: any[];
+    habits: any[];
+  };
+}
 
 interface Task {
   id: number;
@@ -15,205 +43,260 @@ interface Task {
   done: boolean;
 }
 
+interface Expense {
+  id: number;
+  amount: number;
+  category: string;
+  note: string;
+  spent_at: string;
+}
+
+interface DailyLog {
+  id: number;
+  date: string;
+  summary: string;
+  ai_feedback: string | null;
+}
+
 export default function DashboardPage() {
-  const [todayTasks, setTodayTasks] = useState<Task[]>([]);
+  const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadTodayTasks();
+    loadDashboard();
   }, []);
 
-  const loadTodayTasks = async () => {
+  const loadDashboard = async () => {
     try {
-      const data = await getTodayTasks();
-      setTodayTasks(data);
+      const res = await fetch('http://localhost:8000/api/dashboard/summary');
+      const json = await res.json();
+      setData(json);
     } catch (error) {
-      console.error('Error loading tasks:', error);
+      console.error('Error loading dashboard:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const stats = {
-    totalToday: todayTasks.length,
-    completed: todayTasks.filter((t) => t.done).length,
-    pending: todayTasks.filter((t) => !t.done).length,
-    highPriority: todayTasks.filter((t) => t.priority === 'high' && !t.done).length,
-  };
-
-  const completionRate = stats.totalToday > 0 
-    ? Math.round((stats.completed / stats.totalToday) * 100) 
-    : 0;
-
   const getPriorityBadge = (priority: string) => {
     const styles = {
-      high: 'badge-priority-high',
-      medium: 'badge-priority-medium',
-      low: 'badge-priority-low',
+      high: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+      medium: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
+      low: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
     };
-    return styles[priority as keyof typeof styles] || styles.medium;
+    return styles[priority as keyof typeof styles] || styles.low;
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-muted-foreground">Loading dashboard...</div>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-destructive">Failed to load dashboard data</div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
+    <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground mt-1">
-          {new Date().toLocaleDateString('vi-VN', { 
-            weekday: 'long', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
-          })}
+        <p className="text-muted-foreground mt-2">
+          Your productivity overview
         </p>
       </div>
 
+      {/* Quick Actions */}
+      <div className="flex gap-3">
+        <Link href="/tasks">
+          <Button size="sm">
+            <Plus className="w-4 h-4 mr-2" />
+            Add Task
+          </Button>
+        </Link>
+        <Link href="/expenses">
+          <Button size="sm" variant="outline">
+            <Plus className="w-4 h-4 mr-2" />
+            Add Expense
+          </Button>
+        </Link>
+        <Link href="/assistant">
+          <Button size="sm" variant="outline">
+            <MessageSquare className="w-4 h-4 mr-2" />
+            AI Chat
+          </Button>
+        </Link>
+      </div>
+
       {/* KPI Cards */}
-      <div className="grid gap-6 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Tasks hôm nay</p>
-                <p className="text-3xl font-bold mt-2">{stats.totalToday}</p>
-              </div>
-              <Clock className="h-8 w-8 text-muted-foreground" />
-            </div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Tasks</CardTitle>
+            <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{data.tasks.total}</div>
+            <p className="text-xs text-muted-foreground">
+              {data.tasks.completed} completed
+            </p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Hoàn thành</p>
-                <p className="text-3xl font-bold mt-2 text-green-600">{stats.completed}</p>
-              </div>
-              <CheckCircle2 className="h-8 w-8 text-green-600" />
-            </div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Completion Rate</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{data.tasks.completion_rate}%</div>
+            <p className="text-xs text-muted-foreground">
+              {data.tasks.total - data.tasks.completed} pending
+            </p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Chưa xong</p>
-                <p className="text-3xl font-bold mt-2 text-orange-600">{stats.pending}</p>
-              </div>
-              <AlertCircle className="h-8 w-8 text-orange-600" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Expenses (7d)</CardTitle>
+            <Wallet className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {(data.expenses.total_7_days / 1000).toFixed(0)}k
             </div>
+            <p className="text-xs text-muted-foreground">
+              Last 7 days total
+            </p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Completion Rate</p>
-                <p className="text-3xl font-bold mt-2 text-primary">{completionRate}%</p>
-              </div>
-              <TrendingUp className="h-8 w-8 text-primary" />
-            </div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Memory Logs</CardTitle>
+            <Brain className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{data.memory.recent_logs.length}</div>
+            <p className="text-xs text-muted-foreground">
+              Recent summaries
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Today's Tasks */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Tasks hôm nay</CardTitle>
-              <CardDescription>Công việc cần hoàn thành trong ngày</CardDescription>
-            </div>
+      {/* Main Content Grid */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Pending Tasks */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Pending Tasks</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {data.tasks.pending.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No pending tasks</p>
+            ) : (
+              <div className="space-y-3">
+                {data.tasks.pending.slice(0, 5).map((task) => (
+                  <div
+                    key={task.id}
+                    className="flex items-center justify-between p-3 rounded-lg border"
+                  >
+                    <div className="flex-1">
+                      <div className="font-medium">{task.title}</div>
+                      <div className="text-sm text-muted-foreground">
+                        Due: {new Date(task.due_at).toLocaleDateString()}
+                      </div>
+                    </div>
+                    <span
+                      className={`px-2 py-1 rounded-md text-xs font-medium ${getPriorityBadge(
+                        task.priority
+                      )}`}
+                    >
+                      {task.priority}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
             <Link href="/tasks">
-              <Button variant="ghost" size="sm">
-                Xem tất cả
-                <ArrowRight className="ml-2 h-4 w-4" />
+              <Button variant="ghost" className="w-full mt-4" size="sm">
+                View all tasks →
               </Button>
             </Link>
-          </div>
+          </CardContent>
+        </Card>
+
+        {/* Expense by Category Chart */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Expenses by Category</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {data.expenses.items.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No expenses in last 7 days</p>
+            ) : (
+              <ExpensePieChart expenses={data.expenses.items} />
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Expense Chart */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Expense Trends (7 Days)</CardTitle>
         </CardHeader>
         <CardContent>
-          {todayTasks.length === 0 ? (
-            <div className="py-12 text-center">
-              <p className="text-muted-foreground">Không có task nào hôm nay</p>
-              <Link href="/tasks">
-                <Button variant="outline" className="mt-4">
-                  Thêm task mới
-                </Button>
-              </Link>
-            </div>
+          {data.expenses.items.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No expense data</p>
           ) : (
-            <div className="space-y-3">
-              {todayTasks.map((task) => (
-                <div
-                  key={task.id}
-                  className="flex items-center gap-4 rounded-lg border border-border p-4 hover:bg-accent/50 transition-colors"
-                >
-                  <div className={`h-2 w-2 rounded-full ${task.done ? 'bg-green-600' : 'bg-orange-600'}`} />
-                  
-                  <div className="flex-1 min-w-0">
-                    <h4 className={`font-medium ${task.done ? 'line-through text-muted-foreground' : ''}`}>
-                      {task.title}
-                    </h4>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {new Date(task.due_at).toLocaleTimeString('vi-VN', { 
-                        hour: '2-digit', 
-                        minute: '2-digit' 
-                      })}
-                    </p>
-                  </div>
+            <ExpenseBarChart expenses={data.expenses.items} />
+          )}
+        </CardContent>
+      </Card>
 
-                  <span className={getPriorityBadge(task.priority)}>
-                    {task.priority === 'high' ? 'Cao' : task.priority === 'medium' ? 'TB' : 'Thấp'}
-                  </span>
+      {/* Memory Timeline */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="w-5 h-5" />
+            Recent Daily Logs
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {data.memory.recent_logs.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No recent logs</p>
+          ) : (
+            <div className="space-y-4">
+              {data.memory.recent_logs.map((log) => (
+                <div key={log.id} className="border-l-2 border-primary pl-4 pb-4">
+                  <div className="text-sm font-medium text-muted-foreground mb-1">
+                    {new Date(log.date).toLocaleDateString('vi-VN', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })}
+                  </div>
+                  <div className="text-sm mb-2">{log.summary}</div>
+                  {log.ai_feedback && (
+                    <div className="text-sm text-muted-foreground italic bg-muted/30 p-2 rounded">
+                      💡 {log.ai_feedback}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
           )}
         </CardContent>
       </Card>
-
-      {/* Quick Actions */}
-      <div className="grid gap-6 md:grid-cols-3">
-        <Link href="/tasks">
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardHeader>
-              <CardTitle className="text-lg">Quản lý Tasks</CardTitle>
-              <CardDescription>Tạo và theo dõi công việc</CardDescription>
-            </CardHeader>
-          </Card>
-        </Link>
-
-        <Link href="/expenses">
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardHeader>
-              <CardTitle className="text-lg">Theo dõi Chi tiêu</CardTitle>
-              <CardDescription>Quản lý tài chính cá nhân</CardDescription>
-            </CardHeader>
-          </Card>
-        </Link>
-
-        <Link href="/assistant">
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardHeader>
-              <CardTitle className="text-lg">AI Assistant</CardTitle>
-              <CardDescription>Trợ lý AI cá nhân</CardDescription>
-            </CardHeader>
-          </Card>
-        </Link>
-      </div>
     </div>
   );
 }

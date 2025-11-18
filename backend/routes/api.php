@@ -7,6 +7,7 @@ use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\StudyGoalController;
 use App\Http\Controllers\AssistantController;
 use App\Http\Controllers\MemoryController;
+use App\Http\Controllers\DashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -22,6 +23,9 @@ use App\Http\Controllers\MemoryController;
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
+
+// Dashboard
+Route::get('/dashboard/summary', [DashboardController::class, 'getSummary']);
 
 // Tasks
 Route::get('/tasks/today', [TaskController::class, 'today']);

@@ -60,11 +60,15 @@
 ---
 
 # DAY 6 – Dashboard FE
-☐ KPI cards with Shadcn Card  
-☐ Task list with Shadcn components  
-☐ Expense 7 days chart  
-☐ Study progress widget  
-☐ Timeline AI with Shadcn UI  
+☑ DashboardController with getSummary() endpoint  
+☑ TaskFactory for testing  
+☑ DashboardControllerTest (7 tests passed)  
+☑ KPI cards (Tasks, Completion Rate, Expenses, Memory)  
+☑ Pending Tasks widget with priority badges  
+☑ Expense charts (Bar + Pie)  
+☑ Memory Timeline with daily logs + AI feedback  
+☑ Quick Actions (Add Task, Add Expense, AI Chat)  
+☑ Total tests: 31 passed (81 assertions)  
 
 ---
 

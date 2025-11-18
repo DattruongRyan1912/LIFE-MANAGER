@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { formatCurrency, formatDate } from '@/lib/formatter'
+import { ExpenseBarChart, ExpensePieChart } from '@/components/ExpenseChart'
 
 interface Expense {
   id: number
@@ -134,6 +135,12 @@ export default function ExpensesPage() {
             <p className="text-3xl font-bold mt-2">{Object.keys(byCategory).length}</p>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Charts Section */}
+      <div className="grid gap-6 md:grid-cols-2">
+        <ExpenseBarChart expenses={last7} />
+        <ExpensePieChart expenses={last7} />
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">

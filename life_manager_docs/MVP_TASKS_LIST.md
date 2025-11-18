@@ -26,7 +26,10 @@
 ☑ Expense model  
 ☑ /expenses/7days  
 ☑ /expenses (POST)  
-☐ Expense UI with Shadcn components  
+☑ Expense UI with Shadcn components  
+☑ ExpenseSeeder with 16 samples  
+☑ Chart.js integration (Bar + Pie charts)  
+☑ Backend tests (6 passed)  
 
 ---
 

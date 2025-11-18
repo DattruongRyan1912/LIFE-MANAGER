@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\StudyGoal;
+use App\Services\StudyPlanService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -64,5 +65,101 @@ class StudyGoalController extends Controller
     {
         $studyGoal->delete();
         return response()->json(['message' => 'Study goal deleted successfully']);
+    }
+
+    /**
+     * Generate AI-powered weekly study plan
+     */
+    public function generatePlan(StudyGoal $studyGoal)
+    {
+        $studyPlanService = new StudyPlanService();
+        $plan = $studyPlanService->generateWeeklyPlan($studyGoal);
+
+        // Save the plan to database
+        $studyGoal->update([
+            'weekly_plan' => $plan['weekly_plan'],
+        ]);
+
+        return response()->json($plan);
+    }
+
+    /**
+     * Get weekly study plan
+     */
+    public function getWeeklyPlan(StudyGoal $studyGoal)
+    {
+        if (!$studyGoal->hasPlan()) {
+            return response()->json([
+                'message' => 'No plan generated yet. Please generate a plan first.',
+                'has_plan' => false
+            ]);
+        }
+
+        return response()->json([
+            'weekly_plan' => $studyGoal->weekly_plan,
+            'has_plan' => true
+        ]);
+    }
+
+    /**
+     * Update chapter completion status
+     */
+    public function updateChapter(Request $request, StudyGoal $studyGoal)
+    {
+        $validator = Validator::make($request->all(), [
+            'chapter_index' => 'required|integer',
+            'completed' => 'required|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $chapters = $studyGoal->chapters ?? [];
+        $index = $request->chapter_index;
+
+        if (isset($chapters[$index])) {
+            $chapters[$index]['completed'] = $request->completed;
+            $studyGoal->chapters = $chapters;
+            
+            // Auto-update progress based on completed chapters
+            $studyGoal->progress = $studyGoal->calculateProgress();
+            $studyGoal->save();
+
+            return response()->json([
+                'message' => 'Chapter updated successfully',
+                'progress' => $studyGoal->progress,
+                'chapters' => $studyGoal->chapters
+            ]);
+        }
+
+        return response()->json(['error' => 'Chapter not found'], 404);
+    }
+
+    /**
+     * Evaluate current study progress
+     */
+    public function evaluateProgress(StudyGoal $studyGoal)
+    {
+        $studyPlanService = new StudyPlanService();
+        $evaluation = $studyPlanService->evaluateProgress($studyGoal);
+
+        // Save AI feedback
+        if (isset($evaluation['ai_feedback'])) {
+            $studyGoal->update(['ai_feedback' => $evaluation['ai_feedback']]);
+        }
+
+        return response()->json($evaluation);
+    }
+
+    /**
+     * Get daily study suggestions
+     */
+    public function dailySuggestions(StudyGoal $studyGoal)
+    {
+        $studyPlanService = new StudyPlanService();
+        $suggestions = $studyPlanService->suggestDailyStudy($studyGoal);
+
+        return response()->json($suggestions);
     }
 }

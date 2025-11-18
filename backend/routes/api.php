@@ -44,6 +44,11 @@ Route::apiResource('expenses', ExpenseController::class);
 
 // Study Goals
 Route::apiResource('study-goals', StudyGoalController::class);
+Route::post('/study-goals/{studyGoal}/generate-plan', [StudyGoalController::class, 'generatePlan']);
+Route::get('/study-goals/{studyGoal}/weekly-plan', [StudyGoalController::class, 'getWeeklyPlan']);
+Route::post('/study-goals/{studyGoal}/update-chapter', [StudyGoalController::class, 'updateChapter']);
+Route::get('/study-goals/{studyGoal}/evaluate', [StudyGoalController::class, 'evaluateProgress']);
+Route::get('/study-goals/{studyGoal}/daily-suggestions', [StudyGoalController::class, 'dailySuggestions']);
 
 // AI Assistant
 Route::post('/assistant/chat', [AssistantController::class, 'chat']);

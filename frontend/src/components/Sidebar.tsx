@@ -14,7 +14,10 @@ import {
   Clock,
   PieChart,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  Brain,
+  Database,
+  Settings
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -46,7 +49,15 @@ const navigation: MenuItem[] = [
     ]
   },
   { name: "Study Goals", href: "/study", icon: GraduationCap },
-  { name: "AI Assistant", href: "/assistant", icon: MessageSquare },
+  { 
+    name: "AI", 
+    icon: Brain,
+    children: [
+      { name: "Assistant", href: "/assistant", icon: MessageSquare },
+      { name: "Memory Insights", href: "/memory-insights", icon: Database },
+      { name: "Preferences", href: "/preferences", icon: Settings },
+    ]
+  },
 ]
 
 export function Sidebar() {

@@ -6,6 +6,7 @@ use App\Http\Controllers\TaskController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\StudyGoalController;
 use App\Http\Controllers\AssistantController;
+use App\Http\Controllers\MemoryController;
 
 /*
 |--------------------------------------------------------------------------
@@ -37,3 +38,8 @@ Route::apiResource('study-goals', StudyGoalController::class);
 Route::post('/assistant/chat', [AssistantController::class, 'chat']);
 Route::get('/assistant/daily-plan', [AssistantController::class, 'dailyPlan']);
 Route::get('/assistant/daily-summary', [AssistantController::class, 'dailySummary']);
+
+// Memory System
+Route::get('/memories/daily-logs', [MemoryController::class, 'getDailyLogs']);
+Route::get('/memories/long-term', [MemoryController::class, 'getLongTermMemories']);
+Route::get('/memories/long-term/{key}', [MemoryController::class, 'getMemoryByKey']);

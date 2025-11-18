@@ -44,9 +44,18 @@
 ---
 
 # DAY 5 – Memory
-☑ daily_logs  
-☑ long_term_memory  
-☑ MemoryUpdater  
+☑ daily_logs migration (already existed)  
+☑ long_term_memory migration (already existed)  
+☑ DailyLog model  
+☑ LongTermMemory model  
+☑ MemoryUpdater service  
+☑ DailyLogSeeder (7 days of sample data)  
+☑ LongTermMemorySeeder (preferences, habits, goals, insights)  
+☑ MemoryController (3 endpoints)  
+☑ API routes (/memories/daily-logs, /long-term, /long-term/{key})  
+☑ MemorySystemTest (7 tests passed)  
+☑ MemoryControllerTest (4 tests passed)  
+☑ Total tests: 24 passed  
 
 ---
 

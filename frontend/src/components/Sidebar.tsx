@@ -10,7 +10,8 @@ import {
   MessageSquare,
   Home,
   Calendar,
-  Clock
+  Clock,
+  PieChart
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -21,6 +22,7 @@ const navigation = [
   { name: "Timeline", href: "/timeline", icon: Calendar },
   { name: "Pomodoro", href: "/pomodoro", icon: Clock },
   { name: "Expenses", href: "/expenses", icon: Wallet },
+  { name: "Insights", href: "/expense-insights", icon: PieChart },
   { name: "Study Goals", href: "/study", icon: GraduationCap },
   { name: "AI Assistant", href: "/assistant", icon: MessageSquare },
 ]

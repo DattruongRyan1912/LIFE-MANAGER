@@ -3,15 +3,15 @@
 
 ---
 
-# 1. Tasks 2.0 ( DONE )
-- Recurring tasks  
-- Drag & Drop timeline  
-- Pomodoro suggestions  
+# 1. Tasks 2.0 ✅ ( DONE )
+- ✅ Recurring tasks  
+- ✅ Drag & Drop timeline  
+- ✅ Pomodoro suggestions  
 
-# 2. Expenses 2.0
-- Chart  
-- Forecast AI  
-- Category insights  
+# 2. Expenses 2.0 ✅ ( DONE )
+- ✅ Chart  
+- ✅ Forecast AI  
+- ✅ Category insights  
 
 # 3. Study 2.0
 - AI Study plan  

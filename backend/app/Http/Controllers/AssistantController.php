@@ -56,6 +56,8 @@ class AssistantController extends Controller
                 'temperature' => 0.7,
                 'max_tokens' => 1024,
             ]);
+            print(config('services.groq.api_key'));
+            print_r($response->json());
 
             if ($response->successful()) {
                 $aiResponse = $response->json()['choices'][0]['message']['content'];

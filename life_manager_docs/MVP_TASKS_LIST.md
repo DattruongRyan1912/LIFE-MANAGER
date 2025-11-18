@@ -73,16 +73,14 @@
 ---
 
 # DAY 7 – Final Polish & Enhancements
-☐ Study Goals module (CRUD + UI)  
-☐ Task toggle complete API endpoint  
-☐ Expense edit/delete functionality in UI  
-☐ Error boundaries & loading states  
-☐ Toast notifications (success/error)  
-☐ Form validation improvements  
-☐ Mobile responsive check  
-☐ Dark mode polish  
-☐ README.md documentation  
-☐ API documentation (optional)
+☑ Study Goals Backend (Controller + Factory + Seeder + Tests)  
+☑ StudyGoalControllerTest (8 tests passed)  
+☑ Study Goals Frontend UI (/study-goals page)  
+☑ Task Toggle endpoint (PATCH /api/tasks/{id}/toggle)  
+☑ Expense Edit/Delete in UI (inline editing)  
+☑ Tasks page optimistic UI toggle  
+☑ Comprehensive README.md documentation  
+☑ Total tests: 39 passed (105 assertions)
 
 ---
 

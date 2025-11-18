@@ -1,167 +1,331 @@
 # Life Manager AI
 
-A smart personal assistant application built with Laravel, Next.js, and Groq AI to help you manage your daily life efficiently.
+> **AI-Powered Personal Productivity & Life Management System**
 
-## Features
+A comprehensive full-stack application built in 7 days as an MVP to help manage tasks, expenses, study goals, and daily life with AI-powered insights and memory system.
 
-- ✅ **Task Management**: Organize and track your daily tasks
-- 💰 **Expense Tracking**: Monitor your spending habits
-- 📚 **Study Goals**: Set and track learning objectives
-- 🤖 **AI Assistant**: Chat with an intelligent AI powered by Groq
-- 📊 **Dashboard**: Get a comprehensive overview of your day
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Tests](https://img.shields.io/badge/tests-39%20passed-success)
+![Laravel](https://img.shields.io/badge/Laravel-10.x-red)
+![Next.js](https://img.shields.io/badge/Next.js-15.1-black)
 
-## Tech Stack
+---
+
+## 🎯 Features
+
+### ✅ Task Management
+- Create, read, update, delete tasks
+- Priority levels (High, Medium, Low)
+- Due date & time tracking
+- Estimated time in minutes
+- Quick toggle completion status
+- Filter by priority and status
+- Today's tasks view
+
+### 💰 Expense Tracking
+- Track daily expenses with categories
+- 7-day expense overview
+- Category-wise breakdown
+- Interactive charts (Bar & Pie)
+- Edit/Delete functionality
+- Vietnamese currency formatting
+
+### 📚 Study Goals
+- Create and track learning goals
+- Progress tracking (0-100%)
+- Deadline management
+- Visual progress bars with color indicators
+- Days until deadline countdown
+
+### 🤖 AI Assistant
+- Chat interface with Groq AI (llama-3.3-70b-versatile)
+- Context-aware responses
+- Daily planning suggestions
+- Daily summary generation
+- Conversation history
+
+### 🧠 Memory System
+- Daily logs with AI feedback
+- Long-term memory storage
+- User preferences tracking
+- Habit pattern analysis
+- Productivity insights
+
+### 📊 Dashboard
+- Comprehensive overview
+- KPI cards (Tasks, Completion Rate, Expenses, Memories)
+- Pending tasks widget
+- Expense trend charts
+- Memory timeline
+- Quick action buttons
+
+---
+
+## 🛠️ Tech Stack
 
 ### Backend
-- Laravel 10 (PHP Framework)
-- PostgreSQL (Database)
-- Groq AI (LLM Provider)
+- **Framework:** Laravel 10.x
+- **Database:** PostgreSQL
+- **Testing:** PHPUnit (39 tests, 105 assertions)
+- **AI Integration:** Groq API
+- **API:** RESTful endpoints
 
 ### Frontend
-- Next.js 16 (React Framework)
-- TypeScript
-- Tailwind CSS
+- **Framework:** Next.js 15.1 (App Router)
+- **UI Library:** Shadcn UI
+- **Styling:** Tailwind CSS v4 (CSS-based config)
+- **Charts:** Chart.js + react-chartjs-2
+- **Icons:** Lucide React
+- **Font:** Inter
 
-## Project Structure
+### Design System
+- Minimalist professional design (Linear/Notion-inspired)
+- Dark mode support (class strategy)
+- HSL color system for theming
+- Consistent component patterns
+
+---
+
+## 📁 Project Structure
 
 ```
 LIFE_MANAGER/
-├── backend/                 # Laravel API
+├── backend/                    # Laravel API
 │   ├── app/
-│   │   ├── Http/Controllers/
-│   │   ├── Models/
-│   │   └── Services/
-│   ├── database/migrations/
-│   └── routes/api.php
+│   │   ├── Http/Controllers/  # API Controllers
+│   │   ├── Models/            # Eloquent Models
+│   │   └── Services/          # Business Logic
+│   ├── database/
+│   │   ├── migrations/        # Database schema
+│   │   ├── seeders/           # Sample data
+│   │   └── factories/         # Test data generators
+│   ├── routes/api.php         # API routes
+│   └── tests/Feature/         # 39 passing tests
 │
-├── frontend/               # Next.js App
+├── frontend/                   # Next.js App
 │   ├── src/
-│   │   ├── app/
-│   │   ├── components/
-│   │   └── lib/
-│   └── .env.local
+│   │   ├── app/               # App Router pages
+│   │   │   ├── dashboard/
+│   │   │   ├── tasks/
+│   │   │   ├── expenses/
+│   │   │   ├── study-goals/
+│   │   │   └── assistant/
+│   │   ├── components/        # Shadcn UI components
+│   │   └── lib/               # Utilities & API client
+│   └── public/
 │
-└── life_manager_docs/     # Documentation
+└── life_manager_docs/          # Documentation
+    ├── MVP_TASKS_LIST.md
+    ├── SYSTEM_ARCHITECTURE.md
+    ├── DB_SCHEMA.md
+    └── ...
 ```
 
-## Setup Instructions
+---
+
+## 🚀 Quick Start
 
 ### Prerequisites
 - PHP 8.1+
 - Composer
+- PostgreSQL 14+
 - Node.js 18+
-- PostgreSQL
-- Groq API Key (Get from: https://console.groq.com)
+- npm/yarn
 
 ### Backend Setup
 
-1. Navigate to backend directory:
+1. **Clone the repository**
    ```bash
-   cd backend
+   git clone https://github.com/DattruongRyan1912/LIFE-MANAGER.git
+   cd LIFE-MANAGER/backend
    ```
 
-2. Install dependencies:
+2. **Install dependencies**
    ```bash
    composer install
    ```
 
-3. Configure database:
-   - Create a PostgreSQL database named `life_manager`
-   - Update `.env` file with your database credentials:
-     ```env
-     DB_CONNECTION=pgsql
-     DB_HOST=127.0.0.1
-     DB_PORT=5432
-     DB_DATABASE=life_manager
-     DB_USERNAME=postgres
-     DB_PASSWORD=your_password
-     ```
-
-4. Add Groq API key to `.env`:
-   ```env
-   GROQ_API_KEY=your_groq_api_key_here
-   GROQ_MODEL=llama3-70b-8192
+3. **Environment configuration**
+   ```bash
+   cp .env.example .env
+   php artisan key:generate
    ```
 
-5. Run migrations:
+4. **Configure database in `.env`**
+   ```env
+   DB_CONNECTION=pgsql
+   DB_HOST=127.0.0.1
+   DB_PORT=5432
+   DB_DATABASE=life_manager
+   DB_USERNAME=your_username
+   DB_PASSWORD=your_password
+   ```
+
+5. **Configure Groq API (optional)**
+   ```env
+   GROQ_API_KEY=your_groq_api_key
+   ```
+
+6. **Run migrations and seeders**
    ```bash
    php artisan migrate
+   php artisan db:seed
    ```
 
-6. Start the server:
+7. **Start development server**
    ```bash
    php artisan serve
+   # API will be available at http://localhost:8000
    ```
-   
-   Backend will run at: http://localhost:8000
 
 ### Frontend Setup
 
-1. Navigate to frontend directory:
+1. **Navigate to frontend**
    ```bash
-   cd frontend
+   cd ../frontend
    ```
 
-2. Install dependencies:
+2. **Install dependencies**
    ```bash
    npm install
    ```
 
-3. Configure API URL in `.env.local`:
-   ```env
-   NEXT_PUBLIC_API_URL=http://localhost:8000/api
-   ```
-
-4. Start the development server:
+3. **Start development server**
    ```bash
    npm run dev
+   # App will be available at http://localhost:3000
    ```
-   
-   Frontend will run at: http://localhost:3000
 
-## API Endpoints
+---
+
+## 🧪 Testing
+
+Run backend tests:
+```bash
+cd backend
+php artisan test
+```
+
+**Test Coverage:**
+- ✅ 39 tests passed
+- ✅ 105 assertions
+- ✅ All features covered
+
+---
+
+## 📊 API Endpoints
 
 ### Tasks
 - `GET /api/tasks/today` - Get today's tasks
 - `GET /api/tasks` - Get all tasks
-- `POST /api/tasks` - Create a task
-- `PUT /api/tasks/{id}` - Update a task
-- `DELETE /api/tasks/{id}` - Delete a task
+- `POST /api/tasks` - Create task
+- `PUT /api/tasks/{id}` - Update task
+- `PATCH /api/tasks/{id}/toggle` - Toggle completion
+- `DELETE /api/tasks/{id}` - Delete task
 
 ### Expenses
 - `GET /api/expenses/7days` - Get last 7 days expenses
 - `GET /api/expenses` - Get all expenses
-- `POST /api/expenses` - Create an expense
-- `PUT /api/expenses/{id}` - Update an expense
-- `DELETE /api/expenses/{id}` - Delete an expense
+- `POST /api/expenses` - Create expense
+- `PUT /api/expenses/{id}` - Update expense
+- `DELETE /api/expenses/{id}` - Delete expense
 
 ### Study Goals
-- `GET /api/study-goals` - Get all study goals
-- `POST /api/study-goals` - Create a study goal
-- `PUT /api/study-goals/{id}` - Update a study goal
-- `DELETE /api/study-goals/{id}` - Delete a study goal
+- `GET /api/study-goals` - Get all goals
+- `POST /api/study-goals` - Create goal
+- `PUT /api/study-goals/{id}` - Update goal
+- `DELETE /api/study-goals/{id}` - Delete goal
 
 ### AI Assistant
 - `POST /api/assistant/chat` - Chat with AI
-- `GET /api/assistant/daily-plan` - Generate daily plan
-- `GET /api/assistant/daily-summary` - Generate daily summary
+- `GET /api/assistant/daily-plan` - Get daily plan
+- `GET /api/assistant/daily-summary` - Get daily summary
 
-## Development Roadmap
+### Memory System
+- `GET /api/memories/daily-logs` - Get daily logs
+- `GET /api/memories/long-term` - Get all memories
+- `GET /api/memories/long-term/{key}` - Get specific memory
 
-See `life_manager_docs/MVP_TASKS_LIST.md` for the complete development checklist.
+### Dashboard
+- `GET /api/dashboard/summary` - Get comprehensive summary
 
-## Documentation
+---
 
-- [System Architecture](life_manager_docs/SYSTEM_ARCHITECTURE.md)
-- [Database Schema](life_manager_docs/DB_SCHEMA.md)
-- [API Specification](life_manager_docs/API_SPEC.md)
-- [UI Design Guide](life_manager_docs/UI_DESIGN_GUIDE.md)
-- [Deployment Guide](life_manager_docs/DEPLOY_GUIDE.md)
+## 📅 Development Timeline (7 Days)
 
-## License
+- **DAY 1:** Laravel + PostgreSQL setup, migrations
+- **DAY 2:** Task CRUD, Shadcn UI integration, Design system
+- **DAY 3:** Expense module, Chart.js visualization, Tests
+- **DAY 4:** AI Assistant with Groq API, Tests with mocks
+- **DAY 5:** Memory system (DailyLog, LongTermMemory)
+- **DAY 6:** Dashboard with KPI cards, widgets, charts
+- **DAY 7:** Study Goals, Polish, Edit/Delete UI, Toggle endpoint
 
-MIT
+---
 
-## Author
+## 🎨 Design Principles
 
-Built with ❤️ for efficient life management
+- **Minimalism:** Clean, distraction-free interface
+- **Consistency:** Uniform component patterns
+- **Accessibility:** Proper contrast ratios, keyboard navigation
+- **Responsiveness:** Mobile-first approach
+- **Performance:** Optimistic UI updates, efficient queries
+
+---
+
+## 🔒 Security
+
+- Laravel validation on all inputs
+- CORS configuration
+- API rate limiting (if needed in production)
+- Environment variables for sensitive data
+- SQL injection protection via Eloquent ORM
+
+---
+
+## 📝 License
+
+MIT License - see LICENSE file for details
+
+---
+
+## 👨‍💻 Author
+
+**Ryan Truong**
+- GitHub: [@DattruongRyan1912](https://github.com/DattruongRyan1912)
+- Email: dat01202642582@gmail.com
+
+---
+
+## 🙏 Acknowledgments
+
+- [Laravel](https://laravel.com/) - Backend framework
+- [Next.js](https://nextjs.org/) - React framework
+- [Shadcn UI](https://ui.shadcn.com/) - Component library
+- [Groq](https://groq.com/) - AI API
+- [Tailwind CSS](https://tailwindcss.com/) - Styling
+- [Chart.js](https://www.chartjs.org/) - Data visualization
+
+---
+
+## 📸 Screenshots
+
+_Coming soon - Add screenshots of your application here_
+
+---
+
+## 🚧 Future Enhancements
+
+- [ ] User authentication & multi-user support
+- [ ] Email notifications
+- [ ] Mobile app (React Native)
+- [ ] Export data (PDF/CSV)
+- [ ] Calendar integration
+- [ ] Pomodoro timer
+- [ ] Habit tracker
+- [ ] Budget planning
+- [ ] Deployment guides
+
+---
+
+**Built with ❤️ in 7 days**

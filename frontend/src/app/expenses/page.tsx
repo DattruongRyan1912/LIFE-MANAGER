@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { formatCurrency, formatDate } from '@/lib/formatter'
 import { ExpenseBarChart, ExpensePieChart } from '@/components/ExpenseChart'
+import { Trash2, Edit2, X } from 'lucide-react'
 
 interface Expense {
   id: number
@@ -21,6 +22,7 @@ export default function ExpensesPage() {
   const [last7, setLast7] = useState<Expense[]>([])
 
   // Form
+  const [editingId, setEditingId] = useState<number | null>(null)
   const [amount, setAmount] = useState('')
   const [category, setCategory] = useState('Ăn uống')
   const [note, setNote] = useState('')
@@ -65,9 +67,15 @@ export default function ExpensesPage() {
       spent_at: date + 'T12:00:00'
     }
 
+    const url = editingId 
+      ? `/api/expenses/${editingId}`
+      : '/api/expenses'
+    
+    const method = editingId ? 'PUT' : 'POST'
+
     try {
-      const res = await fetch('/api/expenses', {
-        method: 'POST',
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       })
@@ -76,11 +84,46 @@ export default function ExpensesPage() {
         setAmount('')
         setNote('')
         setCategory('Ăn uống')
+        setDate(new Date().toISOString().slice(0, 10))
+        setEditingId(null)
         await loadAll()
         await load7Days()
       } else {
         const err = await res.json()
         console.error('Validation error', err)
+      }
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  function handleEdit(expense: Expense) {
+    setEditingId(expense.id)
+    setAmount(String(expense.amount))
+    setCategory(expense.category)
+    setNote(expense.note || '')
+    setDate(expense.spent_at.split('T')[0])
+  }
+
+  function handleCancelEdit() {
+    setEditingId(null)
+    setAmount('')
+    setNote('')
+    setCategory('Ăn uống')
+    setDate(new Date().toISOString().slice(0, 10))
+  }
+
+  async function handleDelete(id: number) {
+    if (!confirm('Xóa chi tiêu này?')) return
+
+    try {
+      const res = await fetch(`/api/expenses/${id}`, {
+        method: 'DELETE'
+      })
+
+      if (res.ok) {
+        await loadAll()
+        await load7Days()
       }
     } catch (err) {
       console.error(err)
@@ -146,7 +189,7 @@ export default function ExpensesPage() {
       <div className="grid gap-6 md:grid-cols-3">
         <Card>
           <CardHeader>
-            <CardTitle>Thêm chi tiêu</CardTitle>
+            <CardTitle>{editingId ? 'Sửa chi tiêu' : 'Thêm chi tiêu'}</CardTitle>
             <CardDescription>Amount, Category, Note, Date</CardDescription>
           </CardHeader>
           <CardContent>
@@ -180,8 +223,10 @@ export default function ExpensesPage() {
               </div>
 
               <div className="flex gap-3">
-                <Button type="submit">Thêm</Button>
-                <Button type="button" variant="outline" onClick={() => { setAmount(''); setNote(''); setCategory('Ăn uống'); setDate(new Date().toISOString().slice(0,10)); }}>Hủy</Button>
+                <Button type="submit">{editingId ? 'Cập nhật' : 'Thêm'}</Button>
+                <Button type="button" variant="outline" onClick={handleCancelEdit}>
+                  {editingId ? 'Hủy sửa' : 'Hủy'}
+                </Button>
               </div>
             </form>
           </CardContent>
@@ -199,11 +244,18 @@ export default function ExpensesPage() {
               <div className="space-y-3">
                 {last7.map((ex) => (
                   <div key={ex.id} className="flex items-start justify-between border border-border rounded-lg p-3">
-                    <div>
+                    <div className="flex-1">
                       <div className="font-medium">{ex.category} • {formatCurrency(ex.amount)}</div>
                       <div className="text-sm text-muted-foreground">{formatDate(ex.spent_at)} {ex.note ? '• ' + ex.note : ''}</div>
                     </div>
-                    <div className="text-sm text-muted-foreground">{new Date(ex.spent_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</div>
+                    <div className="flex items-center gap-2">
+                      <Button size="sm" variant="outline" onClick={() => handleEdit(ex)}>
+                        <Edit2 className="w-3 h-3" />
+                      </Button>
+                      <Button size="sm" variant="destructive" onClick={() => handleDelete(ex.id)}>
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -246,11 +298,18 @@ export default function ExpensesPage() {
               <div className="space-y-2">
                 {expenses.map((ex) => (
                   <div key={ex.id} className="flex items-center justify-between border border-border rounded-lg p-3">
-                    <div>
+                    <div className="flex-1">
                       <div className="font-medium">{ex.category} • {formatCurrency(ex.amount)}</div>
                       <div className="text-sm text-muted-foreground">{formatDate(ex.spent_at)} {ex.note ? '• ' + ex.note : ''}</div>
                     </div>
-                    <div className="text-sm text-muted-foreground">{new Date(ex.spent_at).toLocaleString('vi-VN')}</div>
+                    <div className="flex items-center gap-2">
+                      <Button size="sm" variant="outline" onClick={() => handleEdit(ex)}>
+                        <Edit2 className="w-3 h-3" />
+                      </Button>
+                      <Button size="sm" variant="destructive" onClick={() => handleDelete(ex.id)}>
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>

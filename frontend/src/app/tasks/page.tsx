@@ -91,10 +91,19 @@ export default function TasksPage() {
   };
 
   const handleToggle = async (id: number) => {
-    const task = tasks.find((t) => t.id === id);
-    if (task) {
-      await updateTask(id, { done: !task.done });
-      loadTasks();
+    try {
+      const res = await fetch(`http://localhost:8000/api/tasks/${id}/toggle`, {
+        method: 'PATCH',
+      });
+      
+      if (res.ok) {
+        // Optimistic UI update
+        setTasks(tasks.map(task => 
+          task.id === id ? { ...task, done: !task.done } : task
+        ));
+      }
+    } catch (error) {
+      console.error('Error toggling task:', error);
     }
   };
 

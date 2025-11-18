@@ -51,9 +51,9 @@ class VectorMemoryService
      * @param string $query
      * @param int $limit
      * @param array $categories
-     * @return \Illuminate\Support\Collection
+     * @return array
      */
-    public function search(string $query, int $limit = 5, array $categories = []): \Illuminate\Support\Collection
+    public function search(string $query, int $limit = 5, array $categories = []): array
     {
         // Generate query embedding
         $queryEmbedding = $this->generateEmbedding($query);

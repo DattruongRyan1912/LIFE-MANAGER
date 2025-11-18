@@ -17,10 +17,12 @@
 - ✅ AI Study plan  
 - ✅ Weekly chapter plan  
 
-# 4. AI 2.0
-- Vector memory  
-- Improved context filter  
-- User preference engine  
+# 4. AI 2.0 ✅ ( DONE )
+- ✅ Vector memory (TF-IDF + cosine similarity)
+- ✅ Improved context filter (size limits, recency priority)
+- ✅ User preference engine (productivity patterns, spending habits)
+- ✅ Memory Insights UI (search, statistics, category filtering)
+- ✅ Preferences UI (auto-detected patterns with confidence)
 
 # 5. Reports
 - Weekly summary  

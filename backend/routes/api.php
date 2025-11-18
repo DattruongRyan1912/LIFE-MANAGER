@@ -1,0 +1,39 @@
+<?php
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\TaskController;
+use App\Http\Controllers\ExpenseController;
+use App\Http\Controllers\StudyGoalController;
+use App\Http\Controllers\AssistantController;
+
+/*
+|--------------------------------------------------------------------------
+| API Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register API routes for your application. These
+| routes are loaded by the RouteServiceProvider and all of them will
+| be assigned to the "api" middleware group. Make something great!
+|
+*/
+
+Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+    return $request->user();
+});
+
+// Tasks
+Route::get('/tasks/today', [TaskController::class, 'today']);
+Route::apiResource('tasks', TaskController::class);
+
+// Expenses
+Route::get('/expenses/7days', [ExpenseController::class, 'last7Days']);
+Route::apiResource('expenses', ExpenseController::class);
+
+// Study Goals
+Route::apiResource('study-goals', StudyGoalController::class);
+
+// AI Assistant
+Route::post('/assistant/chat', [AssistantController::class, 'chat']);
+Route::get('/assistant/daily-plan', [AssistantController::class, 'dailyPlan']);
+Route::get('/assistant/daily-summary', [AssistantController::class, 'dailySummary']);

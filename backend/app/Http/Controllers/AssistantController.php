@@ -56,11 +56,16 @@ class AssistantController extends Controller
                 'temperature' => 0.7,
                 'max_tokens' => 1024,
             ]);
-            print(config('services.groq.api_key'));
-            print_r($response->json());
 
             if ($response->successful()) {
                 $aiResponse = $response->json()['choices'][0]['message']['content'];
+                
+                // Log successful interaction (without sensitive data)
+                Log::info('AI Chat Success', [
+                    'user_message_length' => strlen($userMessage),
+                    'ai_response_length' => strlen($aiResponse),
+                    'model' => config('services.groq.model', 'llama3-70b-8192'),
+                ]);
                 
                 // Update memory if needed
                 $this->memoryUpdater->updateFromConversation($userMessage, $aiResponse);

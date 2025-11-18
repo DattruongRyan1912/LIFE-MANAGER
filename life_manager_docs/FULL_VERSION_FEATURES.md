@@ -3,7 +3,7 @@
 
 ---
 
-# 1. Tasks 2.0
+# 1. Tasks 2.0 ( DONE )
 - Recurring tasks  
 - Drag & Drop timeline  
 - Pomodoro suggestions  

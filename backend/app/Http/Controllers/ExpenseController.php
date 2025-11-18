@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Expense;
+use App\Services\ExpenseForecastService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
@@ -82,5 +83,29 @@ class ExpenseController extends Controller
     {
         $expense->delete();
         return response()->json(['message' => 'Expense deleted successfully']);
+    }
+
+    /**
+     * Get expense forecast (AI-powered)
+     */
+    public function forecast(Request $request)
+    {
+        $daysAhead = $request->input('days', 7);
+        
+        $forecastService = new ExpenseForecastService();
+        $forecast = $forecastService->getForecast($daysAhead);
+        
+        return response()->json($forecast);
+    }
+
+    /**
+     * Get category insights
+     */
+    public function categoryInsights()
+    {
+        $forecastService = new ExpenseForecastService();
+        $insights = $forecastService->getCategoryInsights();
+        
+        return response()->json($insights);
     }
 }

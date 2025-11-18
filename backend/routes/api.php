@@ -38,6 +38,8 @@ Route::apiResource('tasks', TaskController::class);
 
 // Expenses
 Route::get('/expenses/7days', [ExpenseController::class, 'last7Days']);
+Route::get('/expenses/forecast', [ExpenseController::class, 'forecast']);
+Route::get('/expenses/category-insights', [ExpenseController::class, 'categoryInsights']);
 Route::apiResource('expenses', ExpenseController::class);
 
 // Study Goals

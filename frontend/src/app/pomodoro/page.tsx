@@ -29,8 +29,17 @@ export default function PomodoroPage() {
     try {
       const res = await fetch('http://localhost:8000/api/tasks');
       const data = await res.json();
-      // Filter incomplete tasks with Pomodoro estimates
-      const incompleteTasks = data.filter((t: Task) => !t.done && t.pomodoro_estimate);
+      // Filter incomplete tasks (show all, prioritize those with Pomodoro estimates)
+      const incompleteTasks = data
+        .filter((t: Task) => !t.done)
+        .sort((a: Task, b: Task) => {
+          // Sort: tasks with pomodoro_estimate first
+          if (a.pomodoro_estimate && !b.pomodoro_estimate) return -1;
+          if (!a.pomodoro_estimate && b.pomodoro_estimate) return 1;
+          // Then by priority
+          const priorityOrder = { high: 0, medium: 1, low: 2 };
+          return priorityOrder[a.priority] - priorityOrder[b.priority];
+        });
       setTasks(incompleteTasks);
       
       // Auto-select first task
@@ -96,8 +105,8 @@ export default function PomodoroPage() {
             <CardContent className="space-y-2">
               {tasks.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8">
-                  No tasks with Pomodoro estimates. <br />
-                  Add estimated minutes to your tasks!
+                  No incomplete tasks. <br />
+                  Create some tasks to get started!
                 </p>
               ) : (
                 tasks.map((task) => (
@@ -123,10 +132,18 @@ export default function PomodoroPage() {
                           >
                             {task.priority}
                           </span>
-                          {task.pomodoro_estimate && (
+                          {task.pomodoro_estimate ? (
                             <span className="text-xs text-muted-foreground">
                               🍅 {task.pomodoro_completed || 0}/
                               {task.pomodoro_estimate}
+                            </span>
+                          ) : task.estimated_minutes ? (
+                            <span className="text-xs text-muted-foreground">
+                              ⏱️ {task.estimated_minutes}m
+                            </span>
+                          ) : (
+                            <span className="text-xs text-muted-foreground italic">
+                              No estimate
                             </span>
                           )}
                         </div>

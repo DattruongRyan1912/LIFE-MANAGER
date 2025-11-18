@@ -29,6 +29,10 @@ Route::get('/dashboard/summary', [DashboardController::class, 'getSummary']);
 
 // Tasks
 Route::get('/tasks/today', [TaskController::class, 'today']);
+Route::get('/tasks/timeline', [TaskController::class, 'timeline']);
+Route::post('/tasks/timeline/reorder', [TaskController::class, 'updateTimelineOrder']);
+Route::post('/tasks/pomodoro/suggest', [TaskController::class, 'suggestPomodoro']);
+Route::post('/tasks/{task}/pomodoro/complete', [TaskController::class, 'completePomodoroSession']);
 Route::patch('/tasks/{task}/toggle', [TaskController::class, 'toggle']);
 Route::apiResource('tasks', TaskController::class);
 

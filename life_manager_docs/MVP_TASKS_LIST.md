@@ -37,6 +37,9 @@
 ☑ Groq API integration  
 ☑ System Prompt  
 ☑ AssistantController  
+☑ Chat endpoint (/api/assistant/chat)  
+☑ Frontend integration  
+☑ Backend tests (5 passed)  
 
 ---
 

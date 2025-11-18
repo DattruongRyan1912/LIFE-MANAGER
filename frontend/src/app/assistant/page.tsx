@@ -38,16 +38,44 @@ export default function AssistantPage() {
     setLoading(true);
 
     try {
-      // TODO: Call AI API
+      // Call backend API
+      const response = await fetch('http://localhost:8000/api/assistant/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: input,
+          history: messages.slice(-10).map(m => ({
+            role: m.role,
+            content: m.content
+          }))
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('API request failed');
+      }
+
+      const data = await response.json();
+      
       const aiResponse: Message = {
         role: 'assistant',
-        content: `Bạn đã nói: "${input}". Đây là câu trả lời mẫu. (Tích hợp Groq API đang được phát triển)`,
+        content: data.message || data.response || 'Xin lỗi, tôi không thể trả lời lúc này.',
         timestamp: new Date(),
       };
 
       setMessages((prev) => [...prev, aiResponse]);
     } catch (error) {
       console.error('Error:', error);
+      
+      const errorMessage: Message = {
+        role: 'assistant',
+        content: 'Xin lỗi, đã có lỗi xảy ra khi kết nối với AI. Vui lòng thử lại sau.',
+        timestamp: new Date(),
+      };
+      
+      setMessages((prev) => [...prev, errorMessage]);
     } finally {
       setLoading(false);
     }

@@ -25,7 +25,7 @@ class AssistantController extends Controller
     public function chat(Request $request)
     {
         $request->validate([
-            'message' => 'required|string',
+            'message' => 'required|string|max:2000',
         ]);
 
         $userMessage = $request->input('message');

@@ -1,26 +1,147 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* ============================================
+   LIFE MANAGER AI - MINIMALIST DESIGN SYSTEM
+   Inspired by: Linear, Notion, Vercel
+   ============================================ */
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+@theme {
+  /* ===== COLOR PALETTE - MONOCHROME + ACCENT ===== */
+  
+  /* Light Mode */
+  --color-background: #f9fafb;
+  --color-foreground: #111827;
+  --color-card: #ffffff;
+  --color-card-foreground: #111827;
+  --color-popover: #ffffff;
+  --color-popover-foreground: #111827;
+  
+  --color-primary: #6366f1; /* Indigo accent */
+  --color-primary-foreground: #ffffff;
+  
+  --color-secondary: #f3f4f6;
+  --color-secondary-foreground: #111827;
+  
+  --color-muted: #f3f4f6;
+  --color-muted-foreground: #6b7280;
+  
+  --color-accent: #f3f4f6;
+  --color-accent-foreground: #111827;
+  
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #ffffff;
+  
+  --color-border: #e5e7eb;
+  --color-input: #e5e7eb;
+  --color-ring: #6366f1;
+  
+  /* Priority Colors */
+  --color-priority-high: #ef4444;
+  --color-priority-high-bg: #fee2e2;
+  --color-priority-medium: #f59e0b;
+  --color-priority-medium-bg: #fef3c7;
+  --color-priority-low: #10b981;
+  --color-priority-low-bg: #d1fae5;
+  
+  /* Neutral Palette */
+  --color-neutral-50: #f9fafb;
+  --color-neutral-100: #f3f4f6;
+  --color-neutral-200: #e5e7eb;
+  --color-neutral-300: #d1d5db;
+  --color-neutral-400: #9ca3af;
+  --color-neutral-500: #6b7280;
+  --color-neutral-600: #4b5563;
+  --color-neutral-700: #374151;
+  --color-neutral-800: #1f2937;
+  --color-neutral-900: #111827;
+  
+  /* Border Radius */
+  --radius: 0.75rem;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  @theme {
+    /* Dark Mode */
+    --color-background: #111827;
+    --color-foreground: #f9fafb;
+    --color-card: #1f2937;
+    --color-card-foreground: #f9fafb;
+    --color-popover: #1f2937;
+    --color-popover-foreground: #f9fafb;
+    
+    --color-primary: #6366f1;
+    --color-primary-foreground: #ffffff;
+    
+    --color-secondary: #374151;
+    --color-secondary-foreground: #f9fafb;
+    
+    --color-muted: #374151;
+    --color-muted-foreground: #9ca3af;
+    
+    --color-accent: #374151;
+    --color-accent-foreground: #f9fafb;
+    
+    --color-destructive: #ef4444;
+    --color-destructive-foreground: #ffffff;
+    
+    --color-border: #374151;
+    --color-input: #374151;
+    --color-ring: #6366f1;
+    
+    /* Priority Colors - Dark Mode */
+    --color-priority-high-bg: #7f1d1d;
+    --color-priority-medium-bg: #78350f;
+    --color-priority-low-bg: #14532d;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ===== BASE STYLES ===== */
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* ===== CUSTOM COMPONENTS ===== */
+@layer components {
+  /* Priority Badges */
+  .badge-priority-high {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    background-color: var(--color-priority-high-bg);
+    color: var(--color-priority-high);
+  }
+
+  .badge-priority-medium {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    background-color: var(--color-priority-medium-bg);
+    color: var(--color-priority-medium);
+  }
+
+  .badge-priority-low {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    background-color: var(--color-priority-low-bg);
+    color: var(--color-priority-low);
+  }
 }

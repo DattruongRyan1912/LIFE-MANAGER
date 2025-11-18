@@ -16,6 +16,9 @@
 ☑ Create TaskController  
 ☑ /tasks/today  
 ☑ /tasks (POST)  
+☑ Design system + Dark mode  
+☑ Shadcn UI integration  
+☑ Task CRUD UI with filters  
 
 ---
 
@@ -23,6 +26,7 @@
 ☑ Expense model  
 ☑ /expenses/7days  
 ☑ /expenses (POST)  
+☐ Expense UI with Shadcn components  
 
 ---
 
@@ -41,16 +45,26 @@
 ---
 
 # DAY 6 – Dashboard FE
-☑ KPI cards  
-☑ Task list  
-☑ Expense 7 days  
-☑ Study progress  
-☑ Timeline AI  
+☐ KPI cards with Shadcn Card  
+☐ Task list with Shadcn components  
+☐ Expense 7 days chart  
+☐ Study progress widget  
+☐ Timeline AI with Shadcn UI  
 
 ---
 
 # DAY 7 – Chat + Deploy
-☑ Chat UI  
-☑ Deploy BE  
-☑ Deploy FE  
+☐ Chat UI with Shadcn Input/Button  
+☐ Deploy BE  
+☐ Deploy FE
+
+---
+
+# SHADCN UI COMPONENTS INSTALLED
+✅ Button (variants: default, destructive, outline, secondary, ghost, link)  
+✅ Card (with Header, Title, Description, Content, Footer)  
+✅ Input  
+✅ Tailwind CSS v3 + tailwindcss-animate  
+✅ Dark mode with class strategy  
+✅ Design system với HSL color variables  
 

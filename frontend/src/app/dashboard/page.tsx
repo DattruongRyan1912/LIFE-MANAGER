@@ -1,204 +1,218 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import KpiCard from '@/components/KpiCard';
-import TaskCard from '@/components/TaskCard';
-import ExpenseItem from '@/components/ExpenseItem';
-import StudyProgress from '@/components/StudyProgress';
-import { 
-  getTodayTasks, 
-  getLast7DaysExpenses, 
-  getStudyGoals,
-  updateTask,
-  deleteTask,
-  deleteExpense,
-  updateStudyGoal
-} from '@/lib/api';
-import { formatCurrency } from '@/lib/formatter';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { CheckCircle2, Clock, AlertCircle, TrendingUp, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import { getTodayTasks } from '@/lib/api';
 
-export default function Dashboard() {
-  const [tasks, setTasks] = useState<any[]>([]);
-  const [expenses, setExpenses] = useState<any[]>([]);
-  const [studyGoals, setStudyGoals] = useState<any[]>([]);
+interface Task {
+  id: number;
+  title: string;
+  priority: 'low' | 'medium' | 'high';
+  due_at: string;
+  done: boolean;
+}
+
+export default function DashboardPage() {
+  const [todayTasks, setTodayTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadData();
+    loadTodayTasks();
   }, []);
 
-  const loadData = async () => {
+  const loadTodayTasks = async () => {
     try {
-      const [tasksData, expensesData, goalsData] = await Promise.all([
-        getTodayTasks(),
-        getLast7DaysExpenses(),
-        getStudyGoals(),
-      ]);
-      setTasks(tasksData);
-      setExpenses(expensesData);
-      setStudyGoals(goalsData);
+      const data = await getTodayTasks();
+      setTodayTasks(data);
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error('Error loading tasks:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleToggleTask = async (id: number) => {
-    const task = tasks.find((t) => t.id === id);
-    if (task) {
-      await updateTask(id, { done: !task.done });
-      loadData();
-    }
+  const stats = {
+    totalToday: todayTasks.length,
+    completed: todayTasks.filter((t) => t.done).length,
+    pending: todayTasks.filter((t) => !t.done).length,
+    highPriority: todayTasks.filter((t) => t.priority === 'high' && !t.done).length,
   };
 
-  const handleDeleteTask = async (id: number) => {
-    await deleteTask(id);
-    loadData();
-  };
-
-  const handleDeleteExpense = async (id: number) => {
-    await deleteExpense(id);
-    loadData();
-  };
-
-  const handleUpdateStudyProgress = async (id: number, progress: number) => {
-    await updateStudyGoal(id, { progress });
-    loadData();
-  };
-
-  const completedTasks = tasks.filter((t) => t.done).length;
-  const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
-  const avgProgress = studyGoals.length > 0
-    ? Math.round(studyGoals.reduce((sum, g) => sum + g.progress, 0) / studyGoals.length)
+  const completionRate = stats.totalToday > 0 
+    ? Math.round((stats.completed / stats.totalToday) * 100) 
     : 0;
+
+  const getPriorityBadge = (priority: string) => {
+    const styles = {
+      high: 'badge-priority-high',
+      medium: 'badge-priority-medium',
+      low: 'badge-priority-low',
+    };
+    return styles[priority as keyof typeof styles] || styles.medium;
+  };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto p-6">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold">📊 Dashboard - Life Manager AI</h1>
-          <nav className="flex gap-4">
-            <Link href="/tasks" className="text-blue-600 hover:underline">Tasks</Link>
-            <Link href="/expenses" className="text-blue-600 hover:underline">Expenses</Link>
-            <Link href="/study" className="text-blue-600 hover:underline">Study</Link>
-            <Link href="/assistant" className="text-blue-600 hover:underline">AI Chat</Link>
-          </nav>
-        </div>
+    <div className="space-y-8">
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        <p className="text-muted-foreground mt-1">
+          {new Date().toLocaleDateString('vi-VN', { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+          })}
+        </p>
+      </div>
 
-        {/* KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <KpiCard
-            title="Tasks hôm nay"
-            value={`${completedTasks}/${tasks.length}`}
-            icon={<span className="text-2xl">✅</span>}
-          />
-          <KpiCard
-            title="Chi tiêu 7 ngày"
-            value={formatCurrency(totalExpenses)}
-            icon={<span className="text-2xl">💰</span>}
-          />
-          <KpiCard
-            title="Học tập"
-            value={`${avgProgress}%`}
-            icon={<span className="text-2xl">📚</span>}
-          />
-          <KpiCard
-            title="Năng suất"
-            value={tasks.length > 0 ? `${Math.round((completedTasks / tasks.length) * 100)}%` : '0%'}
-            icon={<span className="text-2xl">🎯</span>}
-          />
-        </div>
+      {/* KPI Cards */}
+      <div className="grid gap-6 md:grid-cols-4">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Tasks hôm nay</p>
+                <p className="text-3xl font-bold mt-2">{stats.totalToday}</p>
+              </div>
+              <Clock className="h-8 w-8 text-muted-foreground" />
+            </div>
+          </CardContent>
+        </Card>
 
-        {/* Main Content */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Tasks Today */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold">✅ Tasks hôm nay</h2>
-              <Link
-                href="/tasks"
-                className="text-sm text-blue-600 hover:underline"
-              >
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Hoàn thành</p>
+                <p className="text-3xl font-bold mt-2 text-green-600">{stats.completed}</p>
+              </div>
+              <CheckCircle2 className="h-8 w-8 text-green-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Chưa xong</p>
+                <p className="text-3xl font-bold mt-2 text-orange-600">{stats.pending}</p>
+              </div>
+              <AlertCircle className="h-8 w-8 text-orange-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Completion Rate</p>
+                <p className="text-3xl font-bold mt-2 text-primary">{completionRate}%</p>
+              </div>
+              <TrendingUp className="h-8 w-8 text-primary" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Today's Tasks */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Tasks hôm nay</CardTitle>
+              <CardDescription>Công việc cần hoàn thành trong ngày</CardDescription>
+            </div>
+            <Link href="/tasks">
+              <Button variant="ghost" size="sm">
                 Xem tất cả
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {todayTasks.length === 0 ? (
+            <div className="py-12 text-center">
+              <p className="text-muted-foreground">Không có task nào hôm nay</p>
+              <Link href="/tasks">
+                <Button variant="outline" className="mt-4">
+                  Thêm task mới
+                </Button>
               </Link>
             </div>
-            <div className="space-y-2">
-              {tasks.length === 0 ? (
-                <p className="text-gray-500 text-center py-4">Không có task nào</p>
-              ) : (
-                tasks.slice(0, 5).map((task) => (
-                  <TaskCard
-                    key={task.id}
-                    task={task}
-                    onToggle={handleToggleTask}
-                    onDelete={handleDeleteTask}
-                  />
-                ))
-              )}
-            </div>
-          </div>
+          ) : (
+            <div className="space-y-3">
+              {todayTasks.map((task) => (
+                <div
+                  key={task.id}
+                  className="flex items-center gap-4 rounded-lg border border-border p-4 hover:bg-accent/50 transition-colors"
+                >
+                  <div className={`h-2 w-2 rounded-full ${task.done ? 'bg-green-600' : 'bg-orange-600'}`} />
+                  
+                  <div className="flex-1 min-w-0">
+                    <h4 className={`font-medium ${task.done ? 'line-through text-muted-foreground' : ''}`}>
+                      {task.title}
+                    </h4>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {new Date(task.due_at).toLocaleTimeString('vi-VN', { 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                      })}
+                    </p>
+                  </div>
 
-          {/* Expenses */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold">💰 Chi tiêu 7 ngày</h2>
-              <Link
-                href="/expenses"
-                className="text-sm text-blue-600 hover:underline"
-              >
-                Xem tất cả
-              </Link>
+                  <span className={getPriorityBadge(task.priority)}>
+                    {task.priority === 'high' ? 'Cao' : task.priority === 'medium' ? 'TB' : 'Thấp'}
+                  </span>
+                </div>
+              ))}
             </div>
-            <div className="space-y-2">
-              {expenses.length === 0 ? (
-                <p className="text-gray-500 text-center py-4">Chưa có chi tiêu</p>
-              ) : (
-                expenses.slice(0, 5).map((expense) => (
-                  <ExpenseItem
-                    key={expense.id}
-                    expense={expense}
-                    onDelete={handleDeleteExpense}
-                  />
-                ))
-              )}
-            </div>
-          </div>
+          )}
+        </CardContent>
+      </Card>
 
-          {/* Study Goals */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold">📚 Mục tiêu học tập</h2>
-              <Link
-                href="/study"
-                className="text-sm text-blue-600 hover:underline"
-              >
-                Xem tất cả
-              </Link>
-            </div>
-            <div className="space-y-2">
-              {studyGoals.length === 0 ? (
-                <p className="text-gray-500 text-center py-4">Chưa có mục tiêu</p>
-              ) : (
-                studyGoals.map((goal) => (
-                  <StudyProgress
-                    key={goal.id}
-                    goal={goal}
-                    onUpdate={handleUpdateStudyProgress}
-                  />
-                ))
-              )}
-            </div>
-          </div>
-        </div>
+      {/* Quick Actions */}
+      <div className="grid gap-6 md:grid-cols-3">
+        <Link href="/tasks">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <CardHeader>
+              <CardTitle className="text-lg">Quản lý Tasks</CardTitle>
+              <CardDescription>Tạo và theo dõi công việc</CardDescription>
+            </CardHeader>
+          </Card>
+        </Link>
+
+        <Link href="/expenses">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <CardHeader>
+              <CardTitle className="text-lg">Theo dõi Chi tiêu</CardTitle>
+              <CardDescription>Quản lý tài chính cá nhân</CardDescription>
+            </CardHeader>
+          </Card>
+        </Link>
+
+        <Link href="/assistant">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <CardHeader>
+              <CardTitle className="text-lg">AI Assistant</CardTitle>
+              <CardDescription>Trợ lý AI cá nhân</CardDescription>
+            </CardHeader>
+          </Card>
+        </Link>
       </div>
     </div>
   );

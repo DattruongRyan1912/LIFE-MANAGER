@@ -1,60 +1,111 @@
-import Link from "next/link";
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { 
+  CheckSquare, 
+  Wallet, 
+  GraduationCap, 
+  MessageSquare, 
+  Sparkles,
+  ArrowRight 
+} from 'lucide-react';
 
-export default function Home() {
+export default function HomePage() {
+  const features = [
+    {
+      icon: CheckSquare,
+      title: 'Task Management',
+      description: 'Quản lý công việc thông minh với AI',
+      href: '/tasks',
+    },
+    {
+      icon: Wallet,
+      title: 'Expense Tracking',
+      description: 'Theo dõi chi tiêu hàng ngày',
+      href: '/expenses',
+    },
+    {
+      icon: GraduationCap,
+      title: 'Study Goals',
+      description: 'Lập kế hoạch học tập hiệu quả',
+      href: '/study',
+    },
+    {
+      icon: MessageSquare,
+      title: 'AI Assistant',
+      description: 'Trợ lý AI cá nhân 24/7',
+      href: '/assistant',
+    },
+  ];
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-      <main className="flex flex-col items-center justify-center gap-8 p-8 text-center">
-        <div className="space-y-4">
-          <h1 className="text-6xl font-bold text-gray-900">
-            🤖 Life Manager AI
-          </h1>
-          <p className="text-xl text-gray-600 max-w-2xl">
-            Trợ lý AI thông minh giúp bạn quản lý cuộc sống hiệu quả hơn
-          </p>
+    <div className="min-h-screen flex flex-col items-center justify-center">
+      {/* Hero Section */}
+      <div className="text-center space-y-6 max-w-3xl mx-auto px-4">
+        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium">
+          <Sparkles className="h-4 w-4" />
+          AI-Powered Life Management
         </div>
+        
+        <h1 className="text-5xl font-bold tracking-tight">
+          Life Manager AI
+        </h1>
+        
+        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          Trợ lý cuộc sống thông minh giúp bạn quản lý tasks, chi tiêu, 
+          học tập và hơn thế nữa với sức mạnh của AI
+        </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl mt-8">
-          <Link
-            href="/dashboard"
-            className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow"
-          >
-            <div className="text-4xl mb-2">📊</div>
-            <h2 className="text-xl font-bold mb-2">Dashboard</h2>
-            <p className="text-gray-600">Xem tổng quan về ngày của bạn</p>
+        <div className="flex gap-4 justify-center pt-4">
+          <Link href="/dashboard">
+            <Button size="lg" className="gap-2">
+              Bắt đầu ngay
+              <ArrowRight className="h-4 w-4" />
+            </Button>
           </Link>
-
-          <Link
-            href="/tasks"
-            className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow"
-          >
-            <div className="text-4xl mb-2">✅</div>
-            <h2 className="text-xl font-bold mb-2">Tasks</h2>
-            <p className="text-gray-600">Quản lý công việc hàng ngày</p>
-          </Link>
-
-          <Link
-            href="/expenses"
-            className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow"
-          >
-            <div className="text-4xl mb-2">💰</div>
-            <h2 className="text-xl font-bold mb-2">Expenses</h2>
-            <p className="text-gray-600">Theo dõi chi tiêu cá nhân</p>
-          </Link>
-
-          <Link
-            href="/assistant"
-            className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow"
-          >
-            <div className="text-4xl mb-2">🤖</div>
-            <h2 className="text-xl font-bold mb-2">AI Assistant</h2>
-            <p className="text-gray-600">Trò chuyện với AI trợ lý</p>
+          <Link href="/assistant">
+            <Button size="lg" variant="outline">
+              Trò chuyện với AI
+            </Button>
           </Link>
         </div>
+      </div>
 
-        <div className="mt-8 text-sm text-gray-500">
-          Powered by Groq AI • Built with Next.js & Laravel
+      {/* Features Grid */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 max-w-6xl mx-auto mt-20 px-4">
+        {features.map((feature) => {
+          const Icon = feature.icon;
+          return (
+            <Link key={feature.title} href={feature.href}>
+              <Card className="hover:shadow-lg transition-all hover:-translate-y-1 cursor-pointer h-full">
+                <CardHeader>
+                  <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                    <Icon className="h-6 w-6 text-primary" />
+                  </div>
+                  <CardTitle className="text-lg">{feature.title}</CardTitle>
+                  <CardDescription>{feature.description}</CardDescription>
+                </CardHeader>
+              </Card>
+            </Link>
+          );
+        })}
+      </div>
+
+      {/* Stats */}
+      <div className="grid gap-8 md:grid-cols-3 max-w-4xl mx-auto mt-20 px-4">
+        <div className="text-center">
+          <div className="text-4xl font-bold text-primary">AI-Powered</div>
+          <div className="text-muted-foreground mt-2">Groq LLaMA 3.3</div>
         </div>
-      </main>
+        <div className="text-center">
+          <div className="text-4xl font-bold text-primary">Real-time</div>
+          <div className="text-muted-foreground mt-2">Cập nhật tức thì</div>
+        </div>
+        <div className="text-center">
+          <div className="text-4xl font-bold text-primary">Minimalist</div>
+          <div className="text-muted-foreground mt-2">Giao diện tối giản</div>
+        </div>
+      </div>
     </div>
   );
 }

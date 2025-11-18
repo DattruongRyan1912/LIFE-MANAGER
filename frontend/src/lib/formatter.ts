@@ -1,3 +1,5 @@
+import { classNames } from './colors';
+
 export const formatCurrency = (amount: number): string => {
   return new Intl.NumberFormat('vi-VN', {
     style: 'currency',
@@ -54,4 +56,12 @@ export const getPriorityLabel = (priority: string): string => {
     default:
       return priority;
   }
+};
+
+/**
+ * Get Tailwind class names for priority badge
+ * Uses design system constants
+ */
+export const getPriorityClassName = (priority: 'low' | 'medium' | 'high'): string => {
+  return classNames.priority[priority];
 };

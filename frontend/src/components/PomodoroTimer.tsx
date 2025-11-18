@@ -10,6 +10,7 @@ interface PomodoroTimerProps {
   taskTitle?: string;
   estimatedPomodoros?: number;
   completedPomodoros?: number;
+  estimatedMinutes?: number; // Total estimated minutes for the task
   onPomodoroComplete?: () => void;
 }
 
@@ -18,13 +19,31 @@ export default function PomodoroTimer({
   taskTitle = 'Focus Session',
   estimatedPomodoros = 1,
   completedPomodoros = 0,
+  estimatedMinutes,
   onPomodoroComplete,
 }: PomodoroTimerProps) {
   const POMODORO_TIME = 25 * 60; // 25 minutes in seconds
   const SHORT_BREAK = 5 * 60; // 5 minutes
   const LONG_BREAK = 15 * 60; // 15 minutes
 
-  const [timeLeft, setTimeLeft] = useState(POMODORO_TIME);
+  // Calculate remaining time for smart Pomodoro adjustment
+  const getRemainingMinutes = () => {
+    if (!estimatedMinutes) return null;
+    const completedMinutes = (completedPomodoros || 0) * 25;
+    const remaining = estimatedMinutes - completedMinutes;
+    return remaining > 0 ? remaining : 0;
+  };
+
+  // Get initial Pomodoro time (adjust for last session)
+  const getInitialPomodoroTime = () => {
+    const remainingMinutes = getRemainingMinutes();
+    if (remainingMinutes !== null && remainingMinutes < 25 && remainingMinutes > 0) {
+      return remainingMinutes * 60; // Convert to seconds
+    }
+    return POMODORO_TIME;
+  };
+
+  const [timeLeft, setTimeLeft] = useState(getInitialPomodoroTime());
   const [isRunning, setIsRunning] = useState(false);
   const [isBreak, setIsBreak] = useState(false);
   const [sessionsCompleted, setSessionsCompleted] = useState(completedPomodoros);
@@ -75,13 +94,26 @@ export default function PomodoroTimer({
         });
       }
     } else {
-      // Break completed
-      setTimeLeft(POMODORO_TIME);
+      // Break completed - calculate next Pomodoro time
+      const remainingMinutes = getRemainingMinutes();
+      let nextPomodoroTime = POMODORO_TIME;
+      
+      if (remainingMinutes !== null) {
+        const nextSessionMinutes = remainingMinutes - (sessionsCompleted * 25);
+        if (nextSessionMinutes > 0 && nextSessionMinutes < 25) {
+          nextPomodoroTime = nextSessionMinutes * 60; // Use remaining time for last session
+        }
+      }
+      
+      setTimeLeft(nextPomodoroTime);
       setIsBreak(false);
 
       if ('Notification' in window && Notification.permission === 'granted') {
+        const remainingMins = Math.floor(nextPomodoroTime / 60);
         new Notification('Break Over! 💪', {
-          body: 'Ready to start your next Pomodoro session?',
+          body: remainingMins < 25 
+            ? `Final sprint: ${remainingMins} minutes to complete this task!`
+            : 'Ready to start your next Pomodoro session?',
         });
       }
     }
@@ -101,7 +133,12 @@ export default function PomodoroTimer({
 
   const handleReset = () => {
     setIsRunning(false);
-    setTimeLeft(isBreak ? (sessionsCompleted % 4 === 0 ? LONG_BREAK : SHORT_BREAK) : POMODORO_TIME);
+    if (isBreak) {
+      setTimeLeft(sessionsCompleted % 4 === 0 ? LONG_BREAK : SHORT_BREAK);
+    } else {
+      // Reset to appropriate Pomodoro time (adjusted for remaining minutes)
+      setTimeLeft(getInitialPomodoroTime());
+    }
   };
 
   const formatTime = (seconds: number) => {
@@ -110,10 +147,17 @@ export default function PomodoroTimer({
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const getCurrentSessionTime = () => {
+    if (isBreak) {
+      return sessionsCompleted % 4 === 0 ? LONG_BREAK : SHORT_BREAK;
+    }
+    return getInitialPomodoroTime();
+  };
+
   const progress = isBreak
     ? ((sessionsCompleted % 4 === 0 ? LONG_BREAK : SHORT_BREAK) - timeLeft) /
       (sessionsCompleted % 4 === 0 ? LONG_BREAK : SHORT_BREAK)
-    : (POMODORO_TIME - timeLeft) / POMODORO_TIME;
+    : (getCurrentSessionTime() - timeLeft) / getCurrentSessionTime();
 
   return (
     <Card className="w-full">
@@ -134,6 +178,8 @@ export default function PomodoroTimer({
           <p className="text-sm text-muted-foreground">
             {isBreak
               ? `${sessionsCompleted % 4 === 0 ? 'Long' : 'Short'} Break`
+              : timeLeft < POMODORO_TIME
+              ? `Final Sprint! (${Math.floor(timeLeft / 60)}m remaining)`
               : 'Focus Time'}
           </p>
         </div>
@@ -196,7 +242,7 @@ export default function PomodoroTimer({
             </Button>
           )}
 
-          {taskId && !isBreak && (
+          {taskId && (
             <Button
               variant="outline"
               size="icon"
@@ -205,7 +251,7 @@ export default function PomodoroTimer({
                 handleTimerComplete();
               }}
               disabled={isRunning}
-              title="Skip to break"
+              title={isBreak ? "Skip break" : "Skip to break"}
             >
               <Check className="h-4 w-4" />
             </Button>

@@ -206,6 +206,7 @@ export default function PomodoroPage() {
               taskTitle={selectedTask.title}
               estimatedPomodoros={selectedTask.pomodoro_estimate}
               completedPomodoros={selectedTask.pomodoro_completed}
+              estimatedMinutes={selectedTask.estimated_minutes}
               onPomodoroComplete={handlePomodoroComplete}
             />
           ) : (

@@ -55,7 +55,22 @@ Route::post('/assistant/chat', [AssistantController::class, 'chat']);
 Route::get('/assistant/daily-plan', [AssistantController::class, 'dailyPlan']);
 Route::get('/assistant/daily-summary', [AssistantController::class, 'dailySummary']);
 
-// Memory System
+// Memory System (Legacy)
 Route::get('/memories/daily-logs', [MemoryController::class, 'getDailyLogs']);
 Route::get('/memories/long-term', [MemoryController::class, 'getLongTermMemories']);
 Route::get('/memories/long-term/{key}', [MemoryController::class, 'getMemoryByKey']);
+
+// Vector Memory & Preferences (AI 2.0)
+Route::prefix('memory')->group(function () {
+    Route::post('/vector/store', [MemoryController::class, 'storeVectorMemory']);
+    Route::post('/vector/search', [MemoryController::class, 'searchVectorMemory']);
+    Route::get('/statistics', [MemoryController::class, 'getMemoryStatistics']);
+    Route::get('/by-category/{category}', [MemoryController::class, 'getMemoriesByCategory']);
+    Route::delete('/clean-old', [MemoryController::class, 'cleanOldMemories']);
+});
+
+Route::prefix('preferences')->group(function () {
+    Route::get('/insights', [MemoryController::class, 'getUserInsights']);
+    Route::get('/detect', [MemoryController::class, 'detectPreferences']);
+    Route::post('/update', [MemoryController::class, 'updatePreference']);
+});

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\ContextBuilder;
 use App\Services\MemoryUpdater;
+use App\Services\VectorMemoryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -12,15 +13,20 @@ class AssistantController extends Controller
 {
     protected $contextBuilder;
     protected $memoryUpdater;
+    protected $vectorMemory;
 
-    public function __construct(ContextBuilder $contextBuilder, MemoryUpdater $memoryUpdater)
-    {
+    public function __construct(
+        ContextBuilder $contextBuilder, 
+        MemoryUpdater $memoryUpdater,
+        VectorMemoryService $vectorMemory
+    ) {
         $this->contextBuilder = $contextBuilder;
         $this->memoryUpdater = $memoryUpdater;
+        $this->vectorMemory = $vectorMemory;
     }
 
     /**
-     * Chat with AI Assistant
+     * Chat with AI Assistant with vector memory integration
      */
     public function chat(Request $request)
     {
@@ -30,8 +36,8 @@ class AssistantController extends Controller
 
         $userMessage = $request->input('message');
         
-        // Build context from current data
-        $context = $this->contextBuilder->build();
+        // Build context with vector memory search
+        $context = $this->contextBuilder->build($userMessage);
 
         // Prepare messages for Groq
         $messages = [
@@ -65,10 +71,14 @@ class AssistantController extends Controller
                     'user_message_length' => strlen($userMessage),
                     'ai_response_length' => strlen($aiResponse),
                     'model' => config('services.groq.model', 'llama3-70b-8192'),
+                    'memories_used' => count($context['relevant_memories'] ?? []),
                 ]);
                 
-                // Update memory if needed
+                // Update memory and store conversation
                 $this->memoryUpdater->updateFromConversation($userMessage, $aiResponse);
+                
+                // Store conversation in vector memory
+                $this->storeConversation($userMessage, $aiResponse);
 
                 return response()->json([
                     'message' => $aiResponse
@@ -195,5 +205,36 @@ NHIỆM VỤ:
 - Đưa ra lời khuyên dựa trên dữ liệu
 
 HÃY TRẢ LỜI BẰNG TIẾNG VIỆT, NGẮN GỌN VÀ CỤ THỂ.";
+    }
+    
+    /**
+     * Store conversation in vector memory
+     * 
+     * @param string $userMessage
+     * @param string $aiResponse
+     * @return void
+     */
+    private function storeConversation(string $userMessage, string $aiResponse): void
+    {
+        try {
+            $conversationText = "User: {$userMessage}\nAssistant: {$aiResponse}";
+            
+            $this->vectorMemory->store(
+                'conversation_' . now()->timestamp,
+                [
+                    'user_message' => $userMessage,
+                    'ai_response' => $aiResponse,
+                    'timestamp' => now()->toISOString(),
+                ],
+                'conversations',
+                $conversationText,
+                [
+                    'user_message_length' => strlen($userMessage),
+                    'ai_response_length' => strlen($aiResponse),
+                ]
+            );
+        } catch (\Exception $e) {
+            Log::warning('Failed to store conversation in vector memory: ' . $e->getMessage());
+        }
     }
 }

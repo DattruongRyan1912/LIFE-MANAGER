@@ -13,9 +13,9 @@
 - ✅ Forecast AI  
 - ✅ Category insights  
 
-# 3. Study 2.0
-- AI Study plan  
-- Weekly chapter plan  
+# 3. Study 2.0 ✅ ( DONE )
+- ✅ AI Study plan  
+- ✅ Weekly chapter plan  
 
 # 4. AI 2.0
 - Vector memory  

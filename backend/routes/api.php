@@ -29,6 +29,7 @@ Route::get('/dashboard/summary', [DashboardController::class, 'getSummary']);
 
 // Tasks
 Route::get('/tasks/today', [TaskController::class, 'today']);
+Route::patch('/tasks/{task}/toggle', [TaskController::class, 'toggle']);
 Route::apiResource('tasks', TaskController::class);
 
 // Expenses

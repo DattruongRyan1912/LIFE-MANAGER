@@ -81,4 +81,13 @@ class TaskController extends Controller
         $task->delete();
         return response()->json(['message' => 'Task deleted successfully']);
     }
+
+    /**
+     * Toggle task completion status
+     */
+    public function toggle(Task $task)
+    {
+        $task->update(['done' => !$task->done]);
+        return response()->json($task);
+    }
 }

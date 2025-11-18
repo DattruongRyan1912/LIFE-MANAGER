@@ -24,7 +24,7 @@ class StudyGoalController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'progress' => 'integer|min:0|max:100',
+            'progress' => 'required|integer|min:0|max:100',
             'deadline' => 'required|date',
         ]);
 

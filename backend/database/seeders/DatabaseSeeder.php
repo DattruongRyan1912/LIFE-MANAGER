@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
             ExpenseSeeder::class,
             DailyLogSeeder::class,
             LongTermMemorySeeder::class,
+            StudyGoalSeeder::class,
         ]);
     }
 }

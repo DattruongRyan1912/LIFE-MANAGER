@@ -72,10 +72,17 @@
 
 ---
 
-# DAY 7 – Chat + Deploy
-☐ Chat UI with Shadcn Input/Button  
-☐ Deploy BE  
-☐ Deploy FE
+# DAY 7 – Final Polish & Enhancements
+☐ Study Goals module (CRUD + UI)  
+☐ Task toggle complete API endpoint  
+☐ Expense edit/delete functionality in UI  
+☐ Error boundaries & loading states  
+☐ Toast notifications (success/error)  
+☐ Form validation improvements  
+☐ Mobile responsive check  
+☐ Dark mode polish  
+☐ README.md documentation  
+☐ API documentation (optional)
 
 ---
 

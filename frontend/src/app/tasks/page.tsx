@@ -19,6 +19,11 @@ interface Task {
   due_at: string;
   estimated_minutes?: number;
   done: boolean;
+  recurrence_type?: 'none' | 'daily' | 'weekly' | 'monthly';
+  recurrence_interval?: number;
+  recurrence_end_date?: string;
+  pomodoro_estimate?: number;
+  pomodoro_completed?: number;
 }
 
 export default function TasksPage() {
@@ -33,6 +38,10 @@ export default function TasksPage() {
   const [dueDate, setDueDate] = useState('');
   const [dueTime, setDueTime] = useState('12:00');
   const [estimatedMinutes, setEstimatedMinutes] = useState('');
+  const [recurrenceType, setRecurrenceType] = useState<'none' | 'daily' | 'weekly' | 'monthly'>('none');
+  const [recurrenceInterval, setRecurrenceInterval] = useState('1');
+  const [recurrenceEndDate, setRecurrenceEndDate] = useState('');
+  const [pomodoroSuggestion, setPomodoroSuggestion] = useState<number | null>(null);
 
   // Filter states
   const [filterPriority, setFilterPriority] = useState<string>('all');
@@ -57,11 +66,14 @@ export default function TasksPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const taskData = {
+    const taskData: any = {
       title,
       priority,
       due_at: `${dueDate} ${dueTime}`,
       estimated_minutes: estimatedMinutes ? parseInt(estimatedMinutes) : undefined,
+      recurrence_type: recurrenceType,
+      recurrence_interval: recurrenceType !== 'none' ? parseInt(recurrenceInterval) : undefined,
+      recurrence_end_date: recurrenceType !== 'none' && recurrenceEndDate ? recurrenceEndDate : undefined,
     };
 
     try {
@@ -87,6 +99,9 @@ export default function TasksPage() {
     setDueDate(date.toISOString().split('T')[0]);
     setDueTime(date.toTimeString().slice(0, 5));
     setEstimatedMinutes(task.estimated_minutes?.toString() || '');
+    setRecurrenceType(task.recurrence_type || 'none');
+    setRecurrenceInterval(task.recurrence_interval?.toString() || '1');
+    setRecurrenceEndDate(task.recurrence_end_date || '');
     setShowForm(true);
   };
 
@@ -114,12 +129,39 @@ export default function TasksPage() {
     }
   };
 
+  const getPomodoroSuggestion = async () => {
+    if (!estimatedMinutes || parseInt(estimatedMinutes) <= 0) {
+      alert('Please enter estimated minutes first');
+      return;
+    }
+
+    try {
+      const res = await fetch('http://localhost:8000/api/tasks/pomodoro/suggest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          estimated_minutes: parseInt(estimatedMinutes),
+          priority: priority,
+        }),
+      });
+
+      const data = await res.json();
+      setPomodoroSuggestion(data.suggested_pomodoros);
+    } catch (error) {
+      console.error('Error getting Pomodoro suggestion:', error);
+    }
+  };
+
   const resetForm = () => {
     setTitle('');
     setPriority('medium');
     setDueDate('');
     setDueTime('12:00');
     setEstimatedMinutes('');
+    setRecurrenceType('none');
+    setRecurrenceInterval('1');
+    setRecurrenceEndDate('');
+    setPomodoroSuggestion(null);
     setEditingTask(null);
     setShowForm(false);
   };
@@ -262,13 +304,81 @@ export default function TasksPage() {
 
               <div className="space-y-2">
                 <label className="text-sm font-medium">Thời gian ước tính (phút)</label>
-                <Input
-                  type="number"
-                  value={estimatedMinutes}
-                  onChange={(e) => setEstimatedMinutes(e.target.value)}
-                  placeholder="30"
-                  min="1"
-                />
+                <div className="flex gap-2">
+                  <Input
+                    type="number"
+                    value={estimatedMinutes}
+                    onChange={(e) => setEstimatedMinutes(e.target.value)}
+                    placeholder="30"
+                    min="1"
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={getPomodoroSuggestion}
+                    disabled={!estimatedMinutes}
+                  >
+                    🍅 Suggest
+                  </Button>
+                </div>
+                {pomodoroSuggestion && (
+                  <p className="text-xs text-muted-foreground">
+                    AI suggests: {pomodoroSuggestion} Pomodoro sessions (~{pomodoroSuggestion * 25} min)
+                  </p>
+                )}
+              </div>
+
+              {/* Recurring Task Section */}
+              <div className="border-t pt-4 space-y-4">
+                <h3 className="text-sm font-medium flex items-center gap-2">
+                  🔁 Recurring Task (Optional)
+                </h3>
+                
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Recurrence Type</label>
+                  <select
+                    value={recurrenceType}
+                    onChange={(e) => setRecurrenceType(e.target.value as any)}
+                    className="w-full px-3 py-2 border border-input rounded-md bg-background"
+                  >
+                    <option value="none">No Recurrence</option>
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
+                  </select>
+                </div>
+
+                {recurrenceType !== 'none' && (
+                  <>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">
+                        Repeat every {recurrenceInterval} {recurrenceType === 'daily' ? 'day(s)' : recurrenceType === 'weekly' ? 'week(s)' : 'month(s)'}
+                      </label>
+                      <Input
+                        type="number"
+                        value={recurrenceInterval}
+                        onChange={(e) => setRecurrenceInterval(e.target.value)}
+                        min="1"
+                        max="30"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">End Date (Optional)</label>
+                      <Input
+                        type="date"
+                        value={recurrenceEndDate}
+                        onChange={(e) => setRecurrenceEndDate(e.target.value)}
+                        min={dueDate}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Leave empty for indefinite recurrence
+                      </p>
+                    </div>
+                  </>
+                )}
               </div>
 
               <div className="flex gap-3">
@@ -349,6 +459,16 @@ export default function TasksPage() {
                       <span>{new Date(task.due_at).toLocaleString('vi-VN')}</span>
                       {task.estimated_minutes && (
                         <span>• {task.estimated_minutes} phút</span>
+                      )}
+                      {task.recurrence_type && task.recurrence_type !== 'none' && (
+                        <span className="text-primary">
+                          • 🔁 {task.recurrence_type}
+                        </span>
+                      )}
+                      {task.pomodoro_estimate && (
+                        <span>
+                          • 🍅 {task.pomodoro_completed || 0}/{task.pomodoro_estimate}
+                        </span>
                       )}
                     </div>
                   </div>

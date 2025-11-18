@@ -9,7 +9,8 @@ import {
   GraduationCap, 
   MessageSquare,
   Home,
-  Calendar
+  Calendar,
+  Clock
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -18,6 +19,7 @@ const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Tasks", href: "/tasks", icon: CheckSquare },
   { name: "Timeline", href: "/timeline", icon: Calendar },
+  { name: "Pomodoro", href: "/pomodoro", icon: Clock },
   { name: "Expenses", href: "/expenses", icon: Wallet },
   { name: "Study Goals", href: "/study", icon: GraduationCap },
   { name: "AI Assistant", href: "/assistant", icon: MessageSquare },

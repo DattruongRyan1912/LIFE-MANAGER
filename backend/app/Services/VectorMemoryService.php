@@ -77,22 +77,38 @@ class VectorMemoryService
             if (!$memory->embedding) return null;
             
             $similarity = $this->cosineSimilarity($queryEmbedding, $memory->embedding);
-            $memory->similarity_score = $similarity;
             
             // Boost by relevance score and recency
             $recencyBoost = $memory->last_accessed_at ? 
                 min(1.0, $memory->last_accessed_at->diffInDays(now()) / 30) : 0.5;
-            $memory->final_score = ($similarity * 0.7) + ($memory->relevance_score * 0.2) + ($recencyBoost * 0.1);
+            $finalScore = ($similarity * 0.7) + ($memory->relevance_score * 0.2) + ($recencyBoost * 0.1);
             
-            return $memory;
-        })->filter()->sortByDesc('final_score')->take($limit);
+            // Return as array to avoid DB save issues
+            return [
+                'id' => $memory->id,
+                'key' => $memory->key,
+                'value' => $memory->value,
+                'content' => $memory->content,
+                'category' => $memory->category,
+                'relevance_score' => $memory->relevance_score,
+                'last_accessed_at' => $memory->last_accessed_at,
+                'created_at' => $memory->created_at,
+                'updated_at' => $memory->updated_at,
+                'metadata' => $memory->metadata,
+                'similarity_score' => $similarity,
+                'final_score' => $finalScore,
+            ];
+        })->filter()->sortByDesc('final_score')->take($limit)->values();
 
-        // Mark as accessed
-        foreach ($scoredMemories as $memory) {
-            $memory->markAsAccessed();
+        // Mark as accessed (bulk update)
+        $memoryIds = $scoredMemories->pluck('id')->toArray();
+        if (!empty($memoryIds)) {
+            LongTermMemory::whereIn('id', $memoryIds)->update([
+                'last_accessed_at' => now(),
+            ]);
         }
 
-        return $scoredMemories;
+        return $scoredMemories->toArray();
     }
 
     /**

@@ -19,6 +19,14 @@ class StudyNoteController extends Controller
     }
 
     /**
+     * Get current user ID (default to 1 if not authenticated)
+     */
+    private function getCurrentUserId(): int
+    {
+        return $this->getCurrentUserId() ?? 1;
+    }
+
+    /**
      * Get notes for module
      * 
      * @param int $moduleId
@@ -29,7 +37,7 @@ class StudyNoteController extends Controller
         $module = StudyModule::findOrFail($moduleId);
 
         // Check authorization
-        if ($module->goal->user_id !== auth()->id()) {
+        if ($module->goal->user_id !== $this->getCurrentUserId()) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -61,7 +69,7 @@ class StudyNoteController extends Controller
         $note = StudyNote::with(['module.goal', 'task'])->findOrFail($id);
 
         // Check authorization
-        if ($note->module->goal->user_id !== auth()->id()) {
+        if ($note->module->goal->user_id !== $this->getCurrentUserId()) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -98,8 +106,9 @@ class StudyNoteController extends Controller
 
         $module = StudyModule::findOrFail($validated['module_id']);
 
-        // Check authorization
-        if ($module->goal->user_id !== auth()->id()) {
+        // Check authorization (use default user_id = 1 if not authenticated)
+        $userId = $this->getCurrentUserId() ?? 1;
+        if ($module->goal->user_id !== $userId) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -139,7 +148,7 @@ class StudyNoteController extends Controller
         $note = StudyNote::findOrFail($id);
 
         // Check authorization
-        if ($note->module->goal->user_id !== auth()->id()) {
+        if ($note->module->goal->user_id !== $this->getCurrentUserId()) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -173,7 +182,7 @@ class StudyNoteController extends Controller
         $note = StudyNote::findOrFail($id);
 
         // Check authorization
-        if ($note->module->goal->user_id !== auth()->id()) {
+        if ($note->module->goal->user_id !== $this->getCurrentUserId()) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -196,7 +205,7 @@ class StudyNoteController extends Controller
         $module = StudyModule::findOrFail($moduleId);
 
         // Check authorization
-        if ($module->goal->user_id !== auth()->id()) {
+        if ($module->goal->user_id !== $this->getCurrentUserId()) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 

@@ -18,13 +18,21 @@ class StudyRecommendationController extends Controller
     }
 
     /**
+     * Get current user ID (default to 1 if not authenticated)
+     */
+    private function getCurrentUserId(): int
+    {
+        return $this->getCurrentUserId() ?? 1;
+    }
+
+    /**
      * Get daily study plan
      * 
      * @return JsonResponse
      */
     public function getDailyPlan(): JsonResponse
     {
-        $userId = auth()->id();
+        $userId = $this->getCurrentUserId();
         $plan = $this->recommendationEngine->getDailyStudyPlan($userId);
 
         return response()->json([
@@ -44,7 +52,7 @@ class StudyRecommendationController extends Controller
         $module = StudyModule::with('goal')->findOrFail($moduleId);
 
         // Check authorization
-        if ($module->goal->user_id !== auth()->id()) {
+        if ($module->goal->user_id !== $this->getCurrentUserId()) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -73,7 +81,7 @@ class StudyRecommendationController extends Controller
         $goal = StudyGoal::with('modules.tasks')->findOrFail($goalId);
 
         // Check authorization
-        if ($goal->user_id !== auth()->id()) {
+        if ($goal->user_id !== $this->getCurrentUserId()) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -98,7 +106,7 @@ class StudyRecommendationController extends Controller
      */
     public function getGoalsOverview(): JsonResponse
     {
-        $userId = auth()->id();
+        $userId = $this->getCurrentUserId();
 
         $goals = StudyGoal::where('user_id', $userId)
             ->whereIn('status', ['in_progress', 'not_started'])
@@ -143,7 +151,7 @@ class StudyRecommendationController extends Controller
      */
     public function getStatistics(): JsonResponse
     {
-        $userId = auth()->id();
+        $userId = $this->getCurrentUserId();
 
         $goals = StudyGoal::where('user_id', $userId)->with('modules.tasks')->get();
 

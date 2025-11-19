@@ -46,7 +46,7 @@ class StudyTaskController extends Controller
                     'description' => $task->description,
                     'due_date' => $task->due_date->toDateString(),
                     'estimated_minutes' => $task->estimated_minutes,
-                    'completed_at' => $task->completed_at->toISOString(),
+                    'completed_at' => $task->completed_at ? $task->completed_at->toISOString() : null,
                     'priority' => $task->priority,
                     'is_completed' => $task->isCompleted(),
                     'is_overdue' => $task->isOverdue(),
@@ -290,7 +290,7 @@ class StudyTaskController extends Controller
             'data' => [
                 'id' => $updatedTask->id,
                 'is_completed' => $updatedTask->isCompleted(),
-                'completed_at' => $updatedTask->completed_at->toISOString(),
+                'completed_at' => $updatedTask->completed_at ? $updatedTask->completed_at->toISOString() : null,
                 'module_progress' => $updatedTask->module->progress,
             ],
         ]);

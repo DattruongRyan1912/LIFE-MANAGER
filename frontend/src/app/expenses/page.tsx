@@ -8,6 +8,8 @@ import { formatCurrency, formatDate } from '@/lib/formatter'
 import { ExpenseBarChart, ExpensePieChart } from '@/components/ExpenseChart'
 import { Trash2, Edit2, X } from 'lucide-react'
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+
 interface Expense {
   id: number
   amount: number
@@ -36,7 +38,7 @@ export default function ExpensesPage() {
   async function loadAll() {
     setLoading(true)
     try {
-      const res = await fetch('/api/expenses')
+      const res = await fetch(`${API_BASE_URL}/expenses`)
       const data = await res.json()
       setExpenses(data)
     } catch (e) {
@@ -48,7 +50,7 @@ export default function ExpensesPage() {
 
   async function load7Days() {
     try {
-      const res = await fetch('/api/expenses/7days')
+      const res = await fetch(`${API_BASE_URL}/expenses/7days`)
       const data = await res.json()
       setLast7(data)
     } catch (e) {
@@ -68,8 +70,8 @@ export default function ExpensesPage() {
     }
 
     const url = editingId 
-      ? `/api/expenses/${editingId}`
-      : '/api/expenses'
+      ? `${API_BASE_URL}/expenses/${editingId}`
+      : `${API_BASE_URL}/expenses`
     
     const method = editingId ? 'PUT' : 'POST'
 
@@ -117,7 +119,7 @@ export default function ExpensesPage() {
     if (!confirm('Xóa chi tiêu này?')) return
 
     try {
-      const res = await fetch(`/api/expenses/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/expenses/${id}`, {
         method: 'DELETE'
       })
 

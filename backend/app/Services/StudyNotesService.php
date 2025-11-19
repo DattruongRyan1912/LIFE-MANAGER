@@ -171,7 +171,10 @@ PROMPT;
         // Also store in vector memory for cross-referencing
         $this->vectorMemory->store(
             "study_insight_{$insight->id}",
-            $content,
+            [
+                'insight_id' => $insight->id,
+                'content' => $content,
+            ],
             'insights',
             $content,
             [

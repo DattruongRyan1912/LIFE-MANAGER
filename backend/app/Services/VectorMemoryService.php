@@ -118,7 +118,7 @@ class VectorMemoryService
      * @param string $text
      * @return array
      */
-    private function generateSimpleEmbedding(string $text): array
+    public function generateSimpleEmbedding(string $text): array
     {
         // Simple word frequency vector (normalized)
         $words = str_word_count(strtolower($text), 1);

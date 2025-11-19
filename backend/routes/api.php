@@ -8,6 +8,10 @@ use App\Http\Controllers\StudyGoalController;
 use App\Http\Controllers\AssistantController;
 use App\Http\Controllers\MemoryController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\StudyModuleController;
+use App\Http\Controllers\StudyTaskController;
+use App\Http\Controllers\StudyNoteController;
+use App\Http\Controllers\StudyRecommendationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -73,4 +77,66 @@ Route::prefix('preferences')->group(function () {
     Route::get('/insights', [MemoryController::class, 'getUserInsights']);
     Route::get('/detect', [MemoryController::class, 'detectPreferences']);
     Route::post('/update', [MemoryController::class, 'updatePreference']);
+});
+
+// Study 3.0 - Modules
+Route::prefix('study-goals/{goalId}')->group(function () {
+    Route::get('/modules', [StudyModuleController::class, 'index']);
+    Route::post('/generate-modules', [StudyModuleController::class, 'generateModules']);
+    Route::post('/reorder-modules', [StudyModuleController::class, 'reorder']);
+});
+
+Route::prefix('study-modules')->group(function () {
+    Route::get('/{id}', [StudyModuleController::class, 'show']);
+    Route::post('/', [StudyModuleController::class, 'store']);
+    Route::put('/{id}', [StudyModuleController::class, 'update']);
+    Route::delete('/{id}', [StudyModuleController::class, 'destroy']);
+});
+
+// Study 3.0 - Tasks
+Route::prefix('study-modules/{moduleId}')->group(function () {
+    Route::get('/tasks', [StudyTaskController::class, 'index']);
+    Route::post('/generate-tasks', [StudyTaskController::class, 'generateTasks']);
+    Route::get('/tasks/pending', [StudyTaskController::class, 'getPending']);
+    Route::get('/tasks/overdue', [StudyTaskController::class, 'getOverdue']);
+});
+
+Route::prefix('study-tasks')->group(function () {
+    Route::get('/{id}', [StudyTaskController::class, 'show']);
+    Route::post('/', [StudyTaskController::class, 'store']);
+    Route::put('/{id}', [StudyTaskController::class, 'update']);
+    Route::delete('/{id}', [StudyTaskController::class, 'destroy']);
+    Route::post('/{id}/toggle', [StudyTaskController::class, 'toggleCompletion']);
+    Route::post('/{id}/reschedule', [StudyTaskController::class, 'reschedule']);
+    Route::post('/bulk-priority', [StudyTaskController::class, 'bulkUpdatePriority']);
+});
+
+// Study 3.0 - Notes
+Route::prefix('study-modules/{moduleId}')->group(function () {
+    Route::get('/notes', [StudyNoteController::class, 'index']);
+    Route::get('/insights', [StudyNoteController::class, 'getInsights']);
+});
+
+Route::prefix('study-notes')->group(function () {
+    Route::get('/{id}', [StudyNoteController::class, 'show']);
+    Route::post('/', [StudyNoteController::class, 'store']);
+    Route::put('/{id}', [StudyNoteController::class, 'update']);
+    Route::delete('/{id}', [StudyNoteController::class, 'destroy']);
+    Route::post('/search', [StudyNoteController::class, 'search']);
+    Route::post('/similar-insights', [StudyNoteController::class, 'findSimilarInsights']);
+});
+
+// Study 3.0 - Recommendations
+Route::prefix('study')->group(function () {
+    Route::get('/daily-plan', [StudyRecommendationController::class, 'getDailyPlan']);
+    Route::get('/goals-overview', [StudyRecommendationController::class, 'getGoalsOverview']);
+    Route::get('/statistics', [StudyRecommendationController::class, 'getStatistics']);
+});
+
+Route::prefix('study-modules/{moduleId}')->group(function () {
+    Route::get('/resources', [StudyRecommendationController::class, 'getResourceSuggestions']);
+});
+
+Route::prefix('study-goals/{goalId}')->group(function () {
+    Route::get('/weaknesses', [StudyRecommendationController::class, 'getWeaknesses']);
 });

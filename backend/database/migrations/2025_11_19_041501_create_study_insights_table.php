@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('related_goal_id')->nullable()->constrained('study_goals')->onDelete('cascade');
             $table->foreignId('related_module_id')->nullable()->constrained('study_modules')->onDelete('cascade');
-            $table->foreignId('related_task_id')->nullable()->constrained('study_tasks')->onDelete('cascade');
+            $table->foreignId('related_task_id')->nullable()->constrained('tasks')->onDelete('cascade');
             $table->text('content');
             $table->json('embedding_vector')->nullable(); // For vector search
             $table->timestamps();

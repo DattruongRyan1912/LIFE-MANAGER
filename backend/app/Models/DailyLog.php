@@ -10,6 +10,7 @@ class DailyLog extends Model
     use HasFactory;
 
     protected $fillable = [
+        'user_id',
         'date',
         'summary',
         'ai_feedback',
@@ -18,4 +19,9 @@ class DailyLog extends Model
     protected $casts = [
         'date' => 'date',
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

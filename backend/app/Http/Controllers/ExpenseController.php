@@ -15,12 +15,13 @@ class ExpenseController extends Controller
      */
     public function last7Days()
     {
-        $expenses = Expense::whereBetween('spent_at', [
-            Carbon::now()->subDays(7),
-            Carbon::now()
-        ])
-        ->orderBy('spent_at', 'desc')
-        ->get();
+        $expenses = Expense::where('user_id', $this->getUserId())
+            ->whereBetween('spent_at', [
+                Carbon::now()->subDays(7),
+                Carbon::now()
+            ])
+            ->orderBy('spent_at', 'desc')
+            ->get();
 
         return response()->json($expenses);
     }
@@ -30,7 +31,9 @@ class ExpenseController extends Controller
      */
     public function index()
     {
-        $expenses = Expense::orderBy('spent_at', 'desc')->get();
+        $expenses = Expense::where('user_id', $this->getUserId())
+            ->orderBy('spent_at', 'desc')
+            ->get();
         return response()->json($expenses);
     }
 
@@ -50,7 +53,9 @@ class ExpenseController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $expense = Expense::create($validator->validated());
+        $data = $validator->validated();
+        $data['user_id'] = $this->getUserId();
+        $expense = Expense::create($data);
 
         return response()->json($expense, 201);
     }
@@ -60,6 +65,10 @@ class ExpenseController extends Controller
      */
     public function update(Request $request, Expense $expense)
     {
+        if ($expense->user_id !== $this->getUserId()) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
         $validator = Validator::make($request->all(), [
             'amount' => 'integer|min:0',
             'category' => 'string|max:255',
@@ -81,6 +90,10 @@ class ExpenseController extends Controller
      */
     public function destroy(Expense $expense)
     {
+        if ($expense->user_id !== $this->getUserId()) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
         $expense->delete();
         return response()->json(['message' => 'Expense deleted successfully']);
     }
@@ -107,5 +120,13 @@ class ExpenseController extends Controller
         $insights = $forecastService->getCategoryInsights();
         
         return response()->json($insights);
+    }
+
+    /**
+     * Get current user ID for multi-tenancy
+     */
+    private function getUserId(): int
+    {
+        return auth()->id() ?? 1;
     }
 }

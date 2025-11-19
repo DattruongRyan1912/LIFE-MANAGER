@@ -10,6 +10,7 @@ class StudyGoal extends Model
     use HasFactory;
 
     protected $fillable = [
+        'user_id',
         'name',
         'progress',
         'deadline',
@@ -50,6 +51,14 @@ class StudyGoal extends Model
     public function hasPlan(): bool
     {
         return !empty($this->weekly_plan);
+    }
+
+    /**
+     * Get the user for the goal
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 
     /**

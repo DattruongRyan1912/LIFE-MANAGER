@@ -10,6 +10,7 @@ class LongTermMemory extends Model
     use HasFactory;
 
     protected $fillable = [
+        'user_id',
         'key',
         'value',
         'category',
@@ -27,6 +28,14 @@ class LongTermMemory extends Model
         'last_accessed_at' => 'datetime',
         'relevance_score' => 'float',
     ];
+
+    /**
+     * Get the user for this memory
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 
     /**
      * Update access timestamp

@@ -25,7 +25,8 @@ class MemoryController extends Controller
      */
     public function getDailyLogs(): JsonResponse
     {
-        $logs = DailyLog::orderBy('date', 'desc')
+        $logs = DailyLog::where('user_id', $this->getUserId())
+            ->orderBy('date', 'desc')
             ->take(7)
             ->get();
 
@@ -37,7 +38,8 @@ class MemoryController extends Controller
      */
     public function getLongTermMemories(): JsonResponse
     {
-        $memories = LongTermMemory::all();
+        $memories = LongTermMemory::where('user_id', $this->getUserId())
+            ->all();
 
         return response()->json($memories);
     }
@@ -47,7 +49,9 @@ class MemoryController extends Controller
      */
     public function getMemoryByKey(string $key): JsonResponse
     {
-        $memory = LongTermMemory::where('key', $key)->first();
+        $memory = LongTermMemory::where('user_id', $this->getUserId())
+            ->where('key', $key)
+            ->first();
 
         if (!$memory) {
             return response()->json(['message' => 'Memory not found'], 404);
@@ -73,9 +77,10 @@ class MemoryController extends Controller
         $success = $this->vectorMemory->store(
             $request->key,
             $request->value,
-            $request->category,
+            $category = $request->category,
             $request->content ?? json_encode($request->value),
-            $request->metadata ?? []
+            $request->metadata ?? [],
+            $this->getUserId()
         );
         
         if ($success) {
@@ -103,7 +108,8 @@ class MemoryController extends Controller
         $results = $this->vectorMemory->search(
             $request->query,
             $request->limit ?? 10,
-            $request->categories
+            $request->categories,
+            $this->getUserId()
         );
         
         return response()->json([
@@ -119,7 +125,7 @@ class MemoryController extends Controller
      */
     public function getMemoryStatistics(): JsonResponse
     {
-        $stats = $this->vectorMemory->getStatistics();
+        $stats = $this->vectorMemory->getStatistics($this->getUserId());
         
         return response()->json($stats);
     }
@@ -136,7 +142,7 @@ class MemoryController extends Controller
             return response()->json(['error' => 'Invalid category'], 400);
         }
         
-        $memories = $this->vectorMemory->getByCategory($category, 50);
+        $memories = $this->vectorMemory->getByCategory($category, 50, $this->getUserId());
         
         return response()->json([
             'category' => $category,
@@ -153,7 +159,7 @@ class MemoryController extends Controller
     {
         $daysUnused = $request->input('days_unused', 90);
         
-        $deletedCount = $this->vectorMemory->cleanOldMemories($daysUnused);
+        $deletedCount = $this->vectorMemory->cleanOldMemories($daysUnused, $this->getUserId());
         
         return response()->json([
             'message' => "Cleaned {$deletedCount} old memories",
@@ -202,7 +208,8 @@ class MemoryController extends Controller
             $request->value,
             'preferences',
             "{$request->key}: " . json_encode($request->value),
-            ['manually_set' => true]
+            ['manually_set' => true],
+            $this->getUserId()
         );
         
         if ($success) {
@@ -213,5 +220,13 @@ class MemoryController extends Controller
         }
         
         return response()->json(['error' => 'Failed to update preference'], 500);
+    }
+
+    /**
+     * Get current user ID for multi-tenancy
+     */
+    private function getUserId(): int
+    {
+        return auth()->id() ?? 1;
     }
 }

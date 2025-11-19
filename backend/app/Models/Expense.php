@@ -10,6 +10,7 @@ class Expense extends Model
     use HasFactory;
 
     protected $fillable = [
+        'user_id',
         'amount',
         'category',
         'note',
@@ -19,4 +20,9 @@ class Expense extends Model
     protected $casts = [
         'spent_at' => 'datetime',
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

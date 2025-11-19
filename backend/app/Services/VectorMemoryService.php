@@ -24,15 +24,16 @@ class VectorMemoryService
      * @param string $category
      * @param string $content
      * @param array $metadata
+     * @param int $userId
      * @return LongTermMemory
      */
-    public function store(string $key, array $value, string $category = 'general', string $content = '', array $metadata = []): LongTermMemory
+    public function store(string $key, array $value, string $category = 'general', string $content = '', array $metadata = [], int $userId = 1): LongTermMemory
     {
         // Generate embedding for content
         $embedding = $this->generateEmbedding($content ?: json_encode($value));
 
         return LongTermMemory::updateOrCreate(
-            ['key' => $key],
+            ['key' => $key, 'user_id' => $userId],
             [
                 'value' => $value,
                 'category' => $category,
@@ -41,6 +42,7 @@ class VectorMemoryService
                 'relevance_score' => 1.0,
                 'metadata' => $metadata,
                 'last_accessed_at' => now(),
+                'user_id' => $userId,
             ]
         );
     }
@@ -51,20 +53,22 @@ class VectorMemoryService
      * @param string $query
      * @param int $limit
      * @param array $categories
+     * @param int $userId
      * @return array
      */
-    public function search(string $query, int $limit = 5, array $categories = []): array
+    public function search(string $query, int $limit = 5, array $categories = [], int $userId = 1): array
     {
         // Generate query embedding
         $queryEmbedding = $this->generateEmbedding($query);
         
         if (!$queryEmbedding) {
             // Fallback to keyword search
-            return $this->keywordSearch($query, $limit, $categories);
+            return $this->keywordSearch($query, $limit, $categories, $userId);
         }
 
         // Get all memories (with optional category filter)
-        $memoriesQuery = LongTermMemory::whereNotNull('embedding');
+        $memoriesQuery = LongTermMemory::where('user_id', $userId)
+            ->whereNotNull('embedding');
         
         if (!empty($categories)) {
             $memoriesQuery->whereIn('category', $categories);
@@ -215,13 +219,14 @@ class VectorMemoryService
      * @param string $query
      * @param int $limit
      * @param array $categories
+     * @param int $userId
      * @return \Illuminate\Support\Collection
      */
-    private function keywordSearch(string $query, int $limit, array $categories): \Illuminate\Support\Collection
+    private function keywordSearch(string $query, int $limit, array $categories, int $userId = 1): \Illuminate\Support\Collection
     {
         $keywords = explode(' ', strtolower($query));
         
-        $memoriesQuery = LongTermMemory::query();
+        $memoriesQuery = LongTermMemory::where('user_id', $userId);
         
         if (!empty($categories)) {
             $memoriesQuery->whereIn('category', $categories);
@@ -243,11 +248,13 @@ class VectorMemoryService
      * 
      * @param string $category
      * @param int $limit
+     * @param int $userId
      * @return \Illuminate\Support\Collection
      */
-    public function getByCategory(string $category, int $limit = 20): \Illuminate\Support\Collection
+    public function getByCategory(string $category, int $limit = 20, int $userId = 1): \Illuminate\Support\Collection
     {
-        return LongTermMemory::byCategory($category)
+        return LongTermMemory::where('user_id', $userId)
+            ->byCategory($category)
             ->mostRelevant($limit)
             ->get();
     }
@@ -271,11 +278,13 @@ class VectorMemoryService
      * Clean old, unused memories
      * 
      * @param int $daysUnused
+     * @param int $userId
      * @return int
      */
-    public function cleanOldMemories(int $daysUnused = 90): int
+    public function cleanOldMemories(int $daysUnused = 90, int $userId = 1): int
     {
-        return LongTermMemory::where('last_accessed_at', '<', now()->subDays($daysUnused))
+        return LongTermMemory::where('user_id', $userId)
+            ->where('last_accessed_at', '<', now()->subDays($daysUnused))
             ->where('relevance_score', '<', 0.5)
             ->delete();
     }
@@ -283,18 +292,20 @@ class VectorMemoryService
     /**
      * Get memory statistics
      * 
+     * @param int $userId
      * @return array
      */
-    public function getStatistics(): array
+    public function getStatistics(int $userId = 1): array
     {
         return [
-            'total_memories' => LongTermMemory::count(),
-            'by_category' => LongTermMemory::selectRaw('category, count(*) as count')
+            'total_memories' => LongTermMemory::where('user_id', $userId)->count(),
+            'by_category' => LongTermMemory::where('user_id', $userId)
+                ->selectRaw('category, count(*) as count')
                 ->groupBy('category')
                 ->get()
                 ->pluck('count', 'category'),
-            'recently_accessed' => LongTermMemory::recentlyAccessed(7)->count(),
-            'high_relevance' => LongTermMemory::where('relevance_score', '>=', 1.0)->count(),
+            'recently_accessed' => LongTermMemory::where('user_id', $userId)->recentlyAccessed(7)->count(),
+            'high_relevance' => LongTermMemory::where('user_id', $userId)->where('relevance_score', '>=', 1.0)->count(),
         ];
     }
 }

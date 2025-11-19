@@ -38,6 +38,14 @@ Route::post('/tasks/timeline/reorder', [TaskController::class, 'updateTimelineOr
 Route::post('/tasks/pomodoro/suggest', [TaskController::class, 'suggestPomodoro']);
 Route::post('/tasks/{task}/pomodoro/complete', [TaskController::class, 'completePomodoroSession']);
 Route::patch('/tasks/{task}/toggle', [TaskController::class, 'toggle']);
+
+// Task v3 - Kanban, Calendar, Subtasks
+Route::get('/tasks/kanban', [TaskController::class, 'kanban']);
+Route::get('/tasks/calendar', [TaskController::class, 'calendar']);
+Route::patch('/tasks/{task}/status', [TaskController::class, 'updateStatus']);
+Route::patch('/tasks/{task}/calendar-move', [TaskController::class, 'calendarMove']);
+Route::post('/tasks/{task}/subtasks', [TaskController::class, 'createSubtask']);
+
 Route::apiResource('tasks', TaskController::class);
 
 // Expenses

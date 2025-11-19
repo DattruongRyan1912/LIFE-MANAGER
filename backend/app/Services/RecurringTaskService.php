@@ -139,19 +139,29 @@ class RecurringTaskService
     /**
      * Get timeline data for tasks
      */
-    public function getTimelineData(Carbon $startDate, Carbon $endDate): array
+    public function getTimelineData(Carbon $startDate, Carbon $endDate, int $userId = null): array
     {
-        $tasks = Task::whereBetween('due_at', [$startDate, $endDate])
-            ->orderBy('timeline_order')
+        $query = Task::whereBetween('due_at', [$startDate, $endDate]);
+        
+        if ($userId) {
+            $query->where('user_id', $userId);
+        }
+        
+        $tasks = $query->orderBy('timeline_order')
             ->orderBy('due_at')
             ->get();
 
-        $recurringTasks = Task::where('recurrence_type', '!=', 'none')
-            ->where(function ($query) use ($endDate) {
-                $query->whereNull('recurrence_end_date')
+        $recurringQuery = Task::where('recurrence_type', '!=', 'none')
+            ->where(function ($q) use ($endDate) {
+                $q->whereNull('recurrence_end_date')
                     ->orWhere('recurrence_end_date', '>=', $endDate);
-            })
-            ->get();
+            });
+            
+        if ($userId) {
+            $recurringQuery->where('user_id', $userId);
+        }
+        
+        $recurringTasks = $recurringQuery->get();
 
         // Generate instances for recurring tasks
         $allTasks = $tasks;
@@ -171,10 +181,16 @@ class RecurringTaskService
     /**
      * Update timeline order for tasks
      */
-    public function updateTimelineOrder(array $taskOrders): void
+    public function updateTimelineOrder(array $taskOrders, int $userId = null): void
     {
         foreach ($taskOrders as $taskId => $order) {
-            Task::where('id', $taskId)->update(['timeline_order' => $order]);
+            $query = Task::where('id', $taskId);
+            
+            if ($userId) {
+                $query->where('user_id', $userId);
+            }
+            
+            $query->update(['timeline_order' => $order]);
         }
     }
 }

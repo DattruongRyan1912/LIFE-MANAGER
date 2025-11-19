@@ -10,10 +10,16 @@ class Task extends Model
     use HasFactory;
 
     protected $fillable = [
+        'user_id',
         'title',
+        'description',
         'priority',
+        'status',
+        'task_type',
         'due_at',
+        'start_date',
         'estimated_minutes',
+        'actual_minutes',
         'done',
         'recurrence_type',
         'recurrence_interval',
@@ -26,15 +32,22 @@ class Task extends Model
 
     protected $casts = [
         'due_at' => 'datetime',
+        'start_date' => 'datetime',
         'done' => 'boolean',
         'recurrence_end_date' => 'date',
         'recurrence_interval' => 'integer',
         'pomodoro_estimate' => 'integer',
         'pomodoro_completed' => 'integer',
         'timeline_order' => 'integer',
+        'actual_minutes' => 'integer',
     ];
 
     // Relationships
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
     public function parentTask()
     {
         return $this->belongsTo(Task::class, 'parent_task_id');
@@ -43,6 +56,32 @@ class Task extends Model
     public function childTasks()
     {
         return $this->hasMany(Task::class, 'parent_task_id');
+    }
+
+    // Task v3 relationships
+    public function labels()
+    {
+        return $this->belongsToMany(TaskLabel::class, 'task_label_map', 'task_id', 'label_id');
+    }
+
+    public function dependencies()
+    {
+        return $this->hasMany(TaskDependency::class, 'task_id');
+    }
+
+    public function blockedBy()
+    {
+        return $this->belongsToMany(Task::class, 'task_dependencies', 'task_id', 'blocked_by_task_id');
+    }
+
+    public function blocking()
+    {
+        return $this->belongsToMany(Task::class, 'task_dependencies', 'blocked_by_task_id', 'task_id');
+    }
+
+    public function logs()
+    {
+        return $this->hasMany(TaskLog::class, 'task_id')->orderBy('created_at', 'desc');
     }
 
     // Helper methods

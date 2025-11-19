@@ -14,7 +14,9 @@ class StudyGoalController extends Controller
      */
     public function index()
     {
-        $goals = StudyGoal::orderBy('deadline', 'asc')->get();
+        $goals = StudyGoal::where('user_id', $this->getUserId())
+            ->orderBy('deadline', 'asc')
+            ->get();
         return response()->json($goals);
     }
 
@@ -33,7 +35,9 @@ class StudyGoalController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $goal = StudyGoal::create($validator->validated());
+        $data = $validator->validated();
+        $data['user_id'] = $this->getUserId();
+        $goal = StudyGoal::create($data);
 
         return response()->json($goal, 201);
     }
@@ -43,6 +47,10 @@ class StudyGoalController extends Controller
      */
     public function update(Request $request, StudyGoal $studyGoal)
     {
+        if ($studyGoal->user_id !== $this->getUserId()) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
         $validator = Validator::make($request->all(), [
             'name' => 'string|max:255',
             'progress' => 'integer|min:0|max:100',
@@ -63,6 +71,10 @@ class StudyGoalController extends Controller
      */
     public function destroy(StudyGoal $studyGoal)
     {
+        if ($studyGoal->user_id !== $this->getUserId()) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
         $studyGoal->delete();
         return response()->json(['message' => 'Study goal deleted successfully']);
     }
@@ -141,6 +153,10 @@ class StudyGoalController extends Controller
      */
     public function evaluateProgress(StudyGoal $studyGoal)
     {
+        if ($studyGoal->user_id !== $this->getUserId()) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
         $studyPlanService = new StudyPlanService();
         $evaluation = $studyPlanService->evaluateProgress($studyGoal);
 
@@ -157,9 +173,21 @@ class StudyGoalController extends Controller
      */
     public function dailySuggestions(StudyGoal $studyGoal)
     {
+        if ($studyGoal->user_id !== $this->getUserId()) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
         $studyPlanService = new StudyPlanService();
         $suggestions = $studyPlanService->suggestDailyStudy($studyGoal);
 
         return response()->json($suggestions);
+    }
+
+    /**
+     * Get current user ID for multi-tenancy
+     */
+    private function getUserId(): int
+    {
+        return auth()->id() ?? 1;
     }
 }

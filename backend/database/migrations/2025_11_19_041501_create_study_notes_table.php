@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('study_notes', function (Blueprint $table) {
             $table->id();
             $table->foreignId('module_id')->constrained('study_modules')->onDelete('cascade');
-            $table->foreignId('task_id')->nullable()->constrained('study_tasks')->onDelete('cascade');
+            $table->foreignId('task_id')->nullable()->constrained('tasks')->onDelete('cascade');
             $table->text('content');
             $table->enum('note_type', ['lesson', 'reflection', 'insight'])->default('lesson');
             $table->timestamps();

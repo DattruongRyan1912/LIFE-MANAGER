@@ -40,6 +40,7 @@ interface ModuleListProps {
   onModuleClick: (module: Module) => void;
   onGenerateModules: () => void;
   onDeleteModule: (moduleId: number) => void;
+  onEditModule?: (module: Module) => void;
   loading?: boolean;
 }
 
@@ -49,7 +50,8 @@ export function ModuleList({
   onModuleClick, 
   onGenerateModules,
   onDeleteModule,
-  loading 
+  onEditModule,
+  loading = false,
 }: ModuleListProps) {
   const [expandedModules, setExpandedModules] = useState<Set<number>>(new Set());
 
@@ -182,7 +184,7 @@ export function ModuleList({
                     size="sm"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onModuleClick(module);
+                      onEditModule?.(module);
                     }}
                     className="h-8 w-8 p-0"
                   >

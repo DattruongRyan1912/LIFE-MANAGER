@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ModuleList } from '@/components/study/ModuleList';
 import { TaskList } from '@/components/study/TaskList';
+import { TaskDialog } from '@/components/study/TaskDialog';
+import { ModuleDialog } from '@/components/study/ModuleDialog';
 import { moduleAPI, taskAPI } from '@/lib/api/study3';
 import { 
   BookOpen, Sparkles, ArrowLeft, Plus, Target,
@@ -66,6 +68,12 @@ export function Study3View({ goals, onBack }: Study3ViewProps) {
   const [generatingModules, setGeneratingModules] = useState(false);
   const [generatingTasks, setGeneratingTasks] = useState(false);
   const [view, setView] = useState<'modules' | 'tasks'>('modules');
+
+  // Dialog states
+  const [moduleDialogOpen, setModuleDialogOpen] = useState(false);
+  const [taskDialogOpen, setTaskDialogOpen] = useState(false);
+  const [selectedModuleForEdit, setSelectedModuleForEdit] = useState<Module | null>(null);
+  const [selectedTaskForEdit, setSelectedTaskForEdit] = useState<Task | null>(null);
 
   const selectedGoal = goals.find(g => g.id === selectedGoalId);
 
@@ -199,6 +207,48 @@ export function Study3View({ goals, onBack }: Study3ViewProps) {
       console.error('Failed to delete task:', error);
       toast.error('Failed to delete task');
     }
+  };
+
+  // Dialog handlers
+  const handleOpenModuleDialog = (module?: Module) => {
+    if (module) {
+      setSelectedModuleForEdit(module);
+    } else {
+      setSelectedModuleForEdit(null);
+    }
+    setModuleDialogOpen(true);
+  };
+
+  const handleOpenTaskDialog = (task?: Task) => {
+    if (task) {
+      setSelectedTaskForEdit(task);
+    } else {
+      setSelectedTaskForEdit(null);
+    }
+    setTaskDialogOpen(true);
+  };
+
+  const handleModuleDialogSuccess = () => {
+    if (selectedGoalId) {
+      loadModules(selectedGoalId);
+    }
+  };
+
+  const handleTaskDialogSuccess = () => {
+    if (selectedModule) {
+      loadTasks(selectedModule.id);
+    }
+    if (selectedGoalId) {
+      loadModules(selectedGoalId);
+    }
+  };
+
+  const handleEditModule = (module: Module) => {
+    handleOpenModuleDialog(module);
+  };
+
+  const handleEditTask = (task: Task) => {
+    handleOpenTaskDialog(task);
   };
 
   const getGoalStats = () => {
@@ -359,15 +409,27 @@ export function Study3View({ goals, onBack }: Study3ViewProps) {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold">Learning Modules</h2>
             {modules.length > 0 && (
-              <Button
-                onClick={handleGenerateModules}
-                disabled={generatingModules}
-                variant="outline"
-                className="gap-2"
-              >
-                <Sparkles className="h-4 w-4" />
-                {generatingModules ? 'Generating...' : 'Regenerate with AI'}
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => handleOpenModuleDialog()}
+                  variant="outline"
+                  className="gap-2"
+                  size="sm"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Module
+                </Button>
+                <Button
+                  onClick={handleGenerateModules}
+                  disabled={generatingModules}
+                  variant="outline"
+                  className="gap-2"
+                  size="sm"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  {generatingModules ? 'Generating...' : 'Regenerate with AI'}
+                </Button>
+              </div>
             )}
           </div>
 
@@ -377,6 +439,7 @@ export function Study3View({ goals, onBack }: Study3ViewProps) {
             onModuleClick={handleModuleClick}
             onGenerateModules={handleGenerateModules}
             onDeleteModule={handleDeleteModule}
+            onEditModule={handleEditModule}
             loading={loading}
           />
         </div>
@@ -405,15 +468,27 @@ export function Study3View({ goals, onBack }: Study3ViewProps) {
             </div>
             
             {tasks.length > 0 && (
-              <Button
-                onClick={handleGenerateTasks}
-                disabled={generatingTasks}
-                variant="outline"
-                className="gap-2"
-              >
-                <Sparkles className="h-4 w-4" />
-                {generatingTasks ? 'Generating...' : 'Regenerate Tasks'}
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => handleOpenTaskDialog()}
+                  variant="outline"
+                  className="gap-2"
+                  size="sm"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Task
+                </Button>
+                <Button
+                  onClick={handleGenerateTasks}
+                  disabled={generatingTasks}
+                  variant="outline"
+                  className="gap-2"
+                  size="sm"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  {generatingTasks ? 'Generating...' : 'Regenerate Tasks'}
+                </Button>
+              </div>
             )}
           </div>
 
@@ -423,16 +498,33 @@ export function Study3View({ goals, onBack }: Study3ViewProps) {
               tasks={tasks}
               statistics={taskStatistics}
               onToggleTask={handleToggleTask}
-              onEditTask={(task) => {
-                // TODO: Open edit dialog
-                console.log('Edit task:', task);
-              }}
+              onEditTask={handleEditTask}
               onDeleteTask={handleDeleteTask}
               onGenerateTasks={handleGenerateTasks}
               loading={loading}
             />
           )}
         </div>
+      )}
+
+      {/* Module Dialog */}
+      <ModuleDialog
+        open={moduleDialogOpen}
+        onOpenChange={setModuleDialogOpen}
+        goalId={selectedGoalId || 0}
+        module={selectedModuleForEdit}
+        onSuccess={handleModuleDialogSuccess}
+      />
+
+      {/* Task Dialog */}
+      {selectedModule && (
+        <TaskDialog
+          open={taskDialogOpen}
+          onOpenChange={setTaskDialogOpen}
+          moduleId={selectedModule.id}
+          task={selectedTaskForEdit}
+          onSuccess={handleTaskDialogSuccess}
+        />
       )}
     </div>
   );

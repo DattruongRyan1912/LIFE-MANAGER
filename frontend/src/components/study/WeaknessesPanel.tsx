@@ -35,7 +35,11 @@ export function WeaknessesPanel({ goalId }: WeaknessesPanelProps) {
     setLoading(true);
     try {
       const response = await recommendationAPI.getWeaknesses(goalId);
-      setWeaknesses(response.data || []);
+      // Backend returns array directly in data, or nested in data.weaknesses
+      const weaknessData = Array.isArray(response.data) 
+        ? response.data 
+        : (response.data?.weaknesses || []);
+      setWeaknesses(weaknessData);
     } catch (error) {
       console.error('Failed to load weaknesses:', error);
       toast.error('Failed to load weakness analysis');

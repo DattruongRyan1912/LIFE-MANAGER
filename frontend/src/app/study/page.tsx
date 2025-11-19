@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Study3View } from '@/components/study/Study3View';
 import { 
   Trash2, Edit2, Plus, Target, Sparkles, TrendingUp, TrendingDown, 
   Minus, CheckCircle2, Circle, AlertCircle, Clock, BookOpen, Brain
@@ -21,6 +23,7 @@ interface StudyGoal {
   ai_feedback?: string;
   total_chapters?: number;
   study_type?: string;
+  status?: string;
 }
 
 interface Chapter {
@@ -243,18 +246,39 @@ export default function StudyGoalsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <Tabs defaultValue="study30" className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
-          <BookOpen className="h-6 w-6 text-primary" />
-        </div>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Study Goals 2.0</h1>
-          <p className="text-muted-foreground">AI-powered study planning and progress tracking</p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
+            <BookOpen className="h-6 w-6 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Study Goals</h1>
+            <p className="text-muted-foreground">AI-powered study planning and progress tracking</p>
+          </div>
         </div>
       </div>
 
+      {/* Tabs */}
+      <TabsList className="grid w-full max-w-md grid-cols-2">
+        <TabsTrigger value="study30" className="gap-2">
+          <Brain className="h-4 w-4" />
+          Study 3.0
+        </TabsTrigger>
+        <TabsTrigger value="study20" className="gap-2">
+          <BookOpen className="h-4 w-4" />
+          Study 2.0 (Legacy)
+        </TabsTrigger>
+      </TabsList>
+
+      {/* Study 3.0 Tab */}
+      <TabsContent value="study30" className="space-y-6">
+        <Study3View goals={goals} onBack={() => {}} />
+      </TabsContent>
+
+      {/* Study 2.0 Tab - Original Content */}
+      <TabsContent value="study20" className="space-y-6">
       {/* Add/Edit Form */}
       <Card>
         <CardHeader>
@@ -605,6 +629,7 @@ export default function StudyGoalsPage() {
           </CardContent>
         </Card>
       )}
-    </div>
+      </TabsContent>
+    </Tabs>
   );
 }

@@ -82,7 +82,7 @@ class StudyNoteController extends Controller
                 'module_id' => $note->module_id,
                 'module_name' => $note->module->title,
                 'task_id' => $note->task_id,
-                'task_title' => $note->task->title,
+                'task_title' => $note->task ? $note->task->title : null,
                 'content' => $note->content,
                 'note_type' => $note->note_type,
                 'created_at' => $note->created_at->toISOString(),

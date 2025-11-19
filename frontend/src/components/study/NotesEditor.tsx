@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -12,9 +12,19 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { noteAPI } from '@/lib/api/study3';
 import { toast } from 'sonner';
-import { BookOpen, Lightbulb, Heart, Save, Sparkles } from 'lucide-react';
+import { BookOpen, Lightbulb, Heart, Save, Sparkles, Edit2, Trash2, X } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface Note {
@@ -38,6 +48,9 @@ export function NotesEditor({ moduleId, taskId }: NotesEditorProps) {
   const [noteType, setNoteType] = useState<'lesson' | 'reflection' | 'insight'>('lesson');
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [editingNote, setEditingNote] = useState<Note | null>(null);
+  const [deleteNoteId, setDeleteNoteId] = useState<number | null>(null);
+  const editorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadNotes();
@@ -71,21 +84,65 @@ export function NotesEditor({ moduleId, taskId }: NotesEditorProps) {
 
     setSaving(true);
     try {
-      await noteAPI.createNote({
-        module_id: moduleId,
-        task_id: taskId || undefined,
-        content,
-        note_type: noteType,
-      });
+      if (editingNote) {
+        // Update existing note
+        await noteAPI.updateNote(editingNote.id, {
+          content,
+          note_type: noteType,
+        });
+        toast.success('Note updated successfully');
+        setEditingNote(null);
+      } else {
+        // Create new note
+        await noteAPI.createNote({
+          module_id: moduleId,
+          task_id: taskId || undefined,
+          content,
+          note_type: noteType,
+        });
+        toast.success('Note saved successfully');
+      }
 
-      toast.success('Note saved successfully');
       setContent('');
+      setNoteType('lesson');
       loadNotes();
     } catch (error) {
       console.error('Failed to save note:', error);
       toast.error('Failed to save note');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleEditNote = (note: Note) => {
+    setEditingNote(note);
+    setContent(note.content);
+    setNoteType(note.note_type);
+    
+    // Scroll to editor form smoothly
+    setTimeout(() => {
+      editorRef.current?.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start' 
+      });
+    }, 100);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingNote(null);
+    setContent('');
+    setNoteType('lesson');
+  };
+
+  const handleDeleteNote = async (noteId: number) => {
+    try {
+      await noteAPI.deleteNote(noteId);
+      toast.success('Note deleted successfully');
+      loadNotes();
+      setDeleteNoteId(null);
+    } catch (error) {
+      console.error('Failed to delete note:', error);
+      toast.error('Failed to delete note');
     }
   };
 
@@ -118,11 +175,24 @@ export function NotesEditor({ moduleId, taskId }: NotesEditorProps) {
   return (
     <div className="space-y-6">
       {/* Note Editor */}
-      <Card>
+      <Card ref={editorRef}>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BookOpen className="h-5 w-5" />
-            Study Notes
+          <CardTitle className="flex items-center gap-2 justify-between">
+            <div className="flex items-center gap-2">
+              <BookOpen className="h-5 w-5" />
+              {editingNote ? 'Edit Note' : 'Study Notes'}
+            </div>
+            {editingNote && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleCancelEdit}
+                className="gap-2"
+              >
+                <X className="h-4 w-4" />
+                Cancel
+              </Button>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -175,7 +245,7 @@ export function NotesEditor({ moduleId, taskId }: NotesEditorProps) {
             className="w-full gap-2"
           >
             <Save className="h-4 w-4" />
-            {saving ? 'Saving...' : 'Save Note'}
+            {saving ? 'Saving...' : editingNote ? 'Update Note' : 'Save Note'}
           </Button>
         </CardContent>
       </Card>
@@ -201,16 +271,36 @@ export function NotesEditor({ moduleId, taskId }: NotesEditorProps) {
               {notes.map((note) => (
                 <div
                   key={note.id}
-                  className="border rounded-lg p-4 space-y-2"
+                  className="border rounded-lg p-4 space-y-2 hover:shadow-md transition-shadow"
                 >
                   <div className="flex items-center justify-between">
                     <Badge className={`${getNoteTypeColor(note.note_type)} gap-1.5`}>
                       {getNoteIcon(note.note_type)}
                       {note.note_type}
                     </Badge>
-                    <span className="text-xs text-muted-foreground">
-                      {format(new Date(note.created_at), 'MMM dd, yyyy HH:mm')}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">
+                        {format(new Date(note.created_at), 'MMM dd, yyyy HH:mm')}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEditNote(note)}
+                        className="h-8 w-8 p-0"
+                        title="Edit note"
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setDeleteNoteId(note.id)}
+                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                        title="Delete note"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                   <p className="text-sm whitespace-pre-wrap">{note.content}</p>
                 </div>
@@ -219,6 +309,27 @@ export function NotesEditor({ moduleId, taskId }: NotesEditorProps) {
           )}
         </CardContent>
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteNoteId !== null} onOpenChange={(open) => !open && setDeleteNoteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Note</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this note? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteNoteId && handleDeleteNote(deleteNoteId)}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

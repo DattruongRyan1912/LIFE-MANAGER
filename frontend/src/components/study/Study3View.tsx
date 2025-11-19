@@ -8,6 +8,10 @@ import { ModuleList } from '@/components/study/ModuleList';
 import { TaskList } from '@/components/study/TaskList';
 import { TaskDialog } from '@/components/study/TaskDialog';
 import { ModuleDialog } from '@/components/study/ModuleDialog';
+import { NotesEditor } from '@/components/study/NotesEditor';
+import { InsightsPanel } from '@/components/study/InsightsPanel';
+import { ResourcesPanel } from '@/components/study/ResourcesPanel';
+import { WeaknessesPanel } from '@/components/study/WeaknessesPanel';
 import { moduleAPI, taskAPI } from '@/lib/api/study3';
 import { 
   BookOpen, Sparkles, ArrowLeft, Plus, Target,
@@ -403,6 +407,13 @@ export function Study3View({ goals, onBack }: Study3ViewProps) {
         </div>
       )}
 
+      {/* Weaknesses Panel (in modules view only) */}
+      {view === 'modules' && selectedGoalId && (
+        <div className="mb-6">
+          <WeaknessesPanel goalId={selectedGoalId} />
+        </div>
+      )}
+
       {/* Main Content */}
       {view === 'modules' ? (
         <div>
@@ -493,16 +504,31 @@ export function Study3View({ goals, onBack }: Study3ViewProps) {
           </div>
 
           {selectedModule && (
-            <TaskList
-              moduleId={selectedModule.id}
-              tasks={tasks}
-              statistics={taskStatistics}
-              onToggleTask={handleToggleTask}
-              onEditTask={handleEditTask}
-              onDeleteTask={handleDeleteTask}
-              onGenerateTasks={handleGenerateTasks}
-              loading={loading}
-            />
+            <>
+              <TaskList
+                moduleId={selectedModule.id}
+                tasks={tasks}
+                statistics={taskStatistics}
+                onToggleTask={handleToggleTask}
+                onEditTask={handleEditTask}
+                onDeleteTask={handleDeleteTask}
+                onGenerateTasks={handleGenerateTasks}
+                loading={loading}
+              />
+
+              {/* Study Notes, Insights, and Resources */}
+              <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-1">
+                  <ResourcesPanel moduleId={selectedModule.id} />
+                </div>
+                <div className="lg:col-span-1">
+                  <NotesEditor moduleId={selectedModule.id} />
+                </div>
+                <div className="lg:col-span-1">
+                  <InsightsPanel moduleId={selectedModule.id} />
+                </div>
+              </div>
+            </>
           )}
         </div>
       )}

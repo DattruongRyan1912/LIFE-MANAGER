@@ -18,6 +18,18 @@ interface Expense {
   spent_at: string
 }
 
+// Helper function to format amount for display
+function formatAmountDisplay(value: string) {
+  if (!value) return '';
+  const num = value.replace(/\D/g, '');
+  return num.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
+// Helper function to parse amount from display format
+function parseAmount(value: string) {
+  return value.replace(/,/g, '');
+}
+
 export default function ExpensesPage() {
   const [loading, setLoading] = useState(true)
   const [expenses, setExpenses] = useState<Expense[]>([])
@@ -60,10 +72,10 @@ export default function ExpensesPage() {
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault()
-    if (!amount || Number(amount) <= 0) return
+    if (!amount || Number(parseAmount(amount)) <= 0) return
 
     const payload = {
-      amount: Math.round(Number(amount)),
+      amount: Math.round(Number(parseAmount(amount))),
       category,
       note,
       spent_at: date + 'T12:00:00'
@@ -198,7 +210,16 @@ export default function ExpensesPage() {
             <form onSubmit={handleCreate} className="space-y-3">
               <div>
                 <label className="text-sm font-medium">Số tiền (VND)</label>
-                <Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} required />
+                <div className="relative">
+                  <Input 
+                    type="text" 
+                    value={amount} 
+                    onChange={(e) => setAmount(formatAmountDisplay(e.target.value))}
+                    placeholder="0"
+                    className="text-right pr-8"
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">₫</span>
+                </div>
               </div>
 
               <div>

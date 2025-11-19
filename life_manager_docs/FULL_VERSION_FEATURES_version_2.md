@@ -30,18 +30,23 @@
 - ✅ Bổ sung đề xuất tài liệu học tập dựa trên tiến độ và mục tiêu.
 - ✅ Bổ sung nơi lưu trữ ghi chú học tập, insights liên quan đến quá trình học tập.
 
+# 6. Authentication & User Management 
+- User registration and login system.
+- Password reset functionality.
+- User profile management (update personal info, change password).
 
-# 6. Reports
+
+# 7. Reports
 - Weekly summary  
 - Monthly summary  
 - Trend analysis  
 
-# 7. Automation
+# 8. Automation
 - Smart reminders  
-- Predictive workload  
+- Predictive workload
 - Energy level suggestions  
 
-# 8. Integration
+# 9. Integration
 - Calendar view  
 - PWA Mobile  
 - Offline mode  

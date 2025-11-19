@@ -46,15 +46,17 @@ class StudyNoteController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $notes->map(fn($note) => [
-                'id' => $note->id,
-                'content' => $note->content,
-                'note_type' => $note->note_type,
-                'task_id' => $note->task_id,
-                'task_title' => $note->task->title,
-                'created_at' => $note->created_at->toISOString(),
-                'updated_at' => $note->updated_at->toISOString(),
-            ]),
+            'data' => $notes->map(function($note) {
+                return [
+                    'id' => $note->id,
+                    'content' => $note->content,
+                    'note_type' => $note->note_type,
+                    'task_id' => $note->task_id,
+                    'task_title' => $note->task ? $note->task->title : null,
+                    'created_at' => $note->created_at->toISOString(),
+                    'updated_at' => $note->updated_at->toISOString(),
+                ];
+            }),
         ]);
     }
 

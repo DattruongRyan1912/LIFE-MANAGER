@@ -24,17 +24,24 @@
 - ✅ Memory Insights UI (search, statistics, category filtering)
 - ✅ Preferences UI (auto-detected patterns with confidence)
 
-# 5. Reports
+# 5. Study 3.0 ( Study3.0_Spec.md )
+- Có thể tạo task trong plan ( bằng tay hoặc tự động từ mục tiêu học tập bởi đề xuất của AI) -> từ đó có cơ sở để đánh giá tiến độ , hiệu quả học tập, thiếu sót kiến thức cần bổ sung.
+- Bổ sung giao diện quản lý mục tiêu học tập, theo dõi tiến độ, đánh giá hiệu quả.
+- Bổ sung đề xuất tài liệu học tập dựa trên tiến độ và mục tiêu.
+- Bổ sung nơi lưu trữ ghi chú học tập, insights liên quan đến quá trình học tập.
+
+
+# 6. Reports
 - Weekly summary  
 - Monthly summary  
 - Trend analysis  
 
-# 6. Automation
+# 7. Automation
 - Smart reminders  
 - Predictive workload  
 - Energy level suggestions  
 
-# 7. Integration
+# 8. Integration
 - Calendar view  
 - PWA Mobile  
 - Offline mode  

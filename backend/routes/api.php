@@ -12,6 +12,9 @@ use App\Http\Controllers\StudyModuleController;
 use App\Http\Controllers\StudyTaskController;
 use App\Http\Controllers\StudyNoteController;
 use App\Http\Controllers\StudyRecommendationController;
+use App\Http\Controllers\GroqMetricsController;
+use App\Http\Controllers\LabelController;
+use App\Http\Controllers\TaskDependencyController;
 
 /*
 |--------------------------------------------------------------------------
@@ -48,6 +51,16 @@ Route::post('/tasks/{task}/subtasks', [TaskController::class, 'createSubtask']);
 
 Route::apiResource('tasks', TaskController::class);
 
+// Task v3 - Labels
+Route::apiResource('labels', LabelController::class);
+Route::get('/labels/{label}/tasks', [LabelController::class, 'getTasks']);
+
+// Task v3 - Dependencies
+Route::get('/tasks/{task}/dependencies', [TaskDependencyController::class, 'index']);
+Route::post('/tasks/{task}/dependencies', [TaskDependencyController::class, 'store']);
+Route::delete('/tasks/{task}/dependencies/{dependency}', [TaskDependencyController::class, 'destroy']);
+Route::get('/dependencies/graph', [TaskDependencyController::class, 'getGraph']);
+
 // Expenses
 Route::get('/expenses/7days', [ExpenseController::class, 'last7Days']);
 Route::get('/expenses/forecast', [ExpenseController::class, 'forecast']);
@@ -66,6 +79,10 @@ Route::get('/study-goals/{studyGoal}/daily-suggestions', [StudyGoalController::c
 Route::post('/assistant/chat', [AssistantController::class, 'chat']);
 Route::get('/assistant/daily-plan', [AssistantController::class, 'dailyPlan']);
 Route::get('/assistant/daily-summary', [AssistantController::class, 'dailySummary']);
+
+// Groq API Metrics
+Route::get('/groq/metrics', [GroqMetricsController::class, 'getMetrics']);
+Route::get('/groq/rate-limits', [GroqMetricsController::class, 'getRateLimits']);
 
 // Memory System (Legacy)
 Route::get('/memories/daily-logs', [MemoryController::class, 'getDailyLogs']);

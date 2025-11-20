@@ -3,27 +3,10 @@
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, GripVertical } from "lucide-react";
+import { Plus, GripVertical, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import TaskDetailDrawer from "./TaskDetailDrawer";
+import { CreateTaskDialog } from "./CreateTaskDialog";
 
 const API_BASE_URL = "http://localhost:8000/api";
 
@@ -36,7 +19,9 @@ interface Task {
   task_type: string;
   due_at?: string;
   estimated_minutes?: number;
+  parent_task_id?: number;
   labels?: Array<{ id: number; name: string; color: string }>;
+  subtasks?: Task[];
 }
 
 interface KanbanData {
@@ -81,11 +66,6 @@ export default function KanbanView() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   
   // Create Form states
-  const [newTaskTitle, setNewTaskTitle] = useState("");
-  const [newTaskDescription, setNewTaskDescription] = useState("");
-  const [newTaskPriority, setNewTaskPriority] = useState<"low" | "medium" | "high">("medium");
-  const [newTaskDueDate, setNewTaskDueDate] = useState("");
-  const [newTaskEstimatedMinutes, setNewTaskEstimatedMinutes] = useState("");
   
   const handleTaskClick = (task: Task) => {
     setSelectedTask(task);
@@ -163,74 +143,10 @@ export default function KanbanView() {
     }
   };
 
-  const handleCreateTask = async () => {
-    if (!newTaskTitle.trim()) return;
-
-    // 🎯 Create temporary task with negative ID (will be replaced by real ID)
-    const tempTask: Task = {
-      id: Date.now() * -1, // Negative ID to indicate temporary
-      title: newTaskTitle,
-      description: newTaskDescription || undefined,
-      priority: newTaskPriority,
-      status: selectedStatus as Task['status'],
-      task_type: "work",
-      due_at: newTaskDueDate || undefined,
-      estimated_minutes: newTaskEstimatedMinutes ? parseInt(newTaskEstimatedMinutes) : undefined,
-    };
-
-    // Reset form and close dialog immediately
-    setNewTaskTitle("");
-    setNewTaskDescription("");
-    setNewTaskPriority("medium");
-    setNewTaskDueDate("");
-    setNewTaskEstimatedMinutes("");
+  // Handle task creation from dialog
+  const handleTaskCreated = () => {
     setIsCreateDialogOpen(false);
-
-    // 🎯 OPTIMISTIC UPDATE: Add task to UI immediately
-    setKanbanData(prev => ({
-      ...prev,
-      [selectedStatus]: [...prev[selectedStatus as keyof KanbanData], tempTask]
-    }));
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/tasks`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: tempTask.title,
-          description: tempTask.description || null,
-          priority: tempTask.priority,
-          status: tempTask.status,
-          due_at: tempTask.due_at || null,
-          estimated_minutes: tempTask.estimated_minutes || null,
-        }),
-      });
-
-      if (response.ok) {
-        const newTask = await response.json();
-        // Replace temp task with real task from server
-        setKanbanData(prev => ({
-          ...prev,
-          [selectedStatus]: prev[selectedStatus as keyof KanbanData].map(t => 
-            t.id === tempTask.id ? newTask : t
-          )
-        }));
-      } else {
-        // ❌ Remove temp task if failed
-        setKanbanData(prev => ({
-          ...prev,
-          [selectedStatus]: prev[selectedStatus as keyof KanbanData].filter(t => t.id !== tempTask.id)
-        }));
-        console.error("Failed to create task");
-      }
-    } catch (error) {
-      // ❌ Remove temp task if failed
-      setKanbanData(prev => ({
-        ...prev,
-        [selectedStatus]: prev[selectedStatus as keyof KanbanData].filter(t => t.id !== tempTask.id)
-      }));
-      console.error("Failed to create task:", error);
-    }
+    loadKanbanData(); // Reload data to show new task
   };
 
   const openCreateDialog = (status: string) => {
@@ -249,85 +165,12 @@ export default function KanbanView() {
   return (
     <>
       {/* Create Task Dialog */}
-      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create New Task</DialogTitle>
-            <DialogDescription>
-              Create a new task in the {selectedStatus.replace("_", " ")} column
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">Title *</Label>
-              <Input
-                id="title"
-                placeholder="Task title..."
-                value={newTaskTitle}
-                onChange={(e) => setNewTaskTitle(e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                placeholder="Task description..."
-                value={newTaskDescription}
-                onChange={(e) => setNewTaskDescription(e.target.value)}
-                rows={3}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="priority">Priority</Label>
-                <Select value={newTaskPriority} onValueChange={(value: any) => setNewTaskPriority(value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select priority" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="estimated">Estimated (minutes)</Label>
-                <Input
-                  id="estimated"
-                  type="number"
-                  placeholder="60"
-                  value={newTaskEstimatedMinutes}
-                  onChange={(e) => setNewTaskEstimatedMinutes(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="dueDate">Due Date</Label>
-              <Input
-                id="dueDate"
-                type="datetime-local"
-                value={newTaskDueDate}
-                onChange={(e) => setNewTaskDueDate(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleCreateTask} disabled={!newTaskTitle.trim()}>
-              Create Task
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <CreateTaskDialog
+        open={isCreateDialogOpen}
+        onOpenChange={setIsCreateDialogOpen}
+        defaultStatus={selectedStatus}
+        onTaskCreated={loadKanbanData}
+      />
 
       {/* Kanban Board */}
       <div className="space-y-4">
@@ -382,17 +225,33 @@ export default function KanbanView() {
                       : draggedTaskId === task.id 
                         ? 'opacity-50 scale-95 cursor-move' 
                         : 'opacity-100 cursor-pointer hover:shadow-md hover:shadow-primary/40'
-                  }`}
+                  } ${task.parent_task_id ? 'ml-6 border-l-2 border-l-blue-500/50' : ''}`}
                 >
                   <div className="flex items-start gap-2">
                     <GripVertical className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
                     <div className="flex-1 space-y-2 min-w-0">
+                      {/* Subtask indicator */}
+                      {task.parent_task_id && (
+                        <div className="flex items-center gap-1 text-xs text-blue-400 mb-1">
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                          <span>Subtask</span>
+                        </div>
+                      )}
+                      
                       <div className="flex items-start justify-between gap-2">
                         <h4 className="font-medium text-sm leading-tight flex-1 min-w-0">
                           {task.title}
                           {task.id < 0 && <span className="text-muted-foreground ml-1">(creating...)</span>}
                         </h4>
                         <div className="flex items-center gap-1 shrink-0">
+                          {/* Subtask count indicator */}
+                          {task.subtasks && task.subtasks.length > 0 && (
+                            <span className="text-xs text-muted-foreground bg-gray-700 px-1.5 py-0.5 rounded" title={`${task.subtasks.length} subtasks`}>
+                              {task.subtasks.length}
+                            </span>
+                          )}
                           <div
                             className={`h-2 w-2 rounded-full ${
                               PRIORITY_COLORS[task.priority]

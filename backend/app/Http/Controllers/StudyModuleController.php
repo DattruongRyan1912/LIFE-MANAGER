@@ -28,7 +28,7 @@ class StudyModuleController extends Controller
         $goal = StudyGoal::findOrFail($goalId);
         
         // TODO: Replace with proper auth when Sanctum is implemented
-        $userId = auth()->id() ?? 1 ?? 1;
+        $userId = (auth()->id() ?? 1) ?? 1;
         
         // Check authorization
         if ($goal->user_id !== $userId) {
@@ -76,7 +76,7 @@ class StudyModuleController extends Controller
         }
 
         // Check authorization
-        if ($module->goal->user_id !== auth()->id() ?? 1) {
+        if ($module->goal->user_id !== (auth()->id() ?? 1)) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -129,7 +129,7 @@ class StudyModuleController extends Controller
         $goal = StudyGoal::findOrFail($validated['goal_id']);
 
         // Check authorization
-        if ($goal->user_id !== auth()->id() ?? 1) {
+        if ($goal->user_id !== (auth()->id() ?? 1)) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -171,7 +171,7 @@ class StudyModuleController extends Controller
         $module = StudyModule::findOrFail($id);
 
         // Check authorization
-        if ($module->goal->user_id !== auth()->id() ?? 1) {
+        if ($module->goal->user_id !== (auth()->id() ?? 1)) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -207,7 +207,7 @@ class StudyModuleController extends Controller
         $module = StudyModule::findOrFail($id);
 
         // Check authorization
-        if ($module->goal->user_id !== auth()->id() ?? 1) {
+        if ($module->goal->user_id !== (auth()->id() ?? 1)) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -231,7 +231,7 @@ class StudyModuleController extends Controller
         $goal = StudyGoal::findOrFail($goalId);
 
         // Check authorization
-        if ($goal->user_id !== auth()->id() ?? 1) {
+        if ($goal->user_id !== (auth()->id() ?? 1)) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -286,7 +286,7 @@ class StudyModuleController extends Controller
         $goal = StudyGoal::findOrFail($goalId);
 
         // Check authorization
-        if ($goal->user_id !== auth()->id() ?? 1) {
+        if ($goal->user_id !== (auth()->id() ?? 1)) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 

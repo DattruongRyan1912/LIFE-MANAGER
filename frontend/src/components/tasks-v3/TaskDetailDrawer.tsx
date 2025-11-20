@@ -255,6 +255,19 @@ export default function TaskDetailDrawer({
             )}
           </div>
 
+          {/* Parent Task Info (if this is a subtask) */}
+          {task.parent_task_id && (
+            <div className="p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+              <div className="flex items-center gap-2 text-sm">
+                <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+                <span className="text-blue-400 font-medium">Subtask of:</span>
+                <span className="text-gray-200">Task #{task.parent_task_id}</span>
+              </div>
+            </div>
+          )}
+
           {/* Status and Priority */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -436,8 +449,14 @@ export default function TaskDetailDrawer({
             <div className="space-y-2">
               {task.subtasks && task.subtasks.length > 0 ? (
                 task.subtasks.map((subtask) => (
-                  <Card key={subtask.id} className="p-3">
+                  <Card 
+                    key={subtask.id} 
+                    className="p-3 ml-4 border-l-2 border-l-blue-500/50 bg-gray-800/30"
+                  >
                     <div className="flex items-center gap-3">
+                      <svg className="w-3 h-3 text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
                       <button
                         onClick={() => handleToggleSubtask(subtask)}
                         className="shrink-0"
@@ -449,7 +468,7 @@ export default function TaskDetailDrawer({
                         )}
                       </button>
                       <span
-                        className={`text-sm ${
+                        className={`text-sm flex-1 ${
                           subtask.status === "done"
                             ? "line-through text-muted-foreground"
                             : ""
@@ -457,6 +476,18 @@ export default function TaskDetailDrawer({
                       >
                         {subtask.title}
                       </span>
+                      {subtask.priority && (
+                        <div
+                          className={`h-2 w-2 rounded-full ${
+                            subtask.priority === "high"
+                              ? "bg-red-500"
+                              : subtask.priority === "medium"
+                              ? "bg-yellow-500"
+                              : "bg-blue-500"
+                          }`}
+                          title={`${subtask.priority} priority`}
+                        />
+                      )}
                     </div>
                   </Card>
                 ))

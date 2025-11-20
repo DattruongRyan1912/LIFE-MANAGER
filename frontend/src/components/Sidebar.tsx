@@ -17,7 +17,9 @@ import {
   ChevronRight,
   Brain,
   Database,
-  Settings
+  Settings,
+  BarChart3,
+  Gauge
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -36,7 +38,7 @@ const navigation: MenuItem[] = [
     icon: CheckSquare,
     children: [
       { name: "All Tasks", href: "/tasks", icon: CheckSquare },
-      { name: "Timeline", href: "/timeline", icon: Calendar },
+      { name: "Today's Tasks", href: "/today-tasks", icon: Calendar },
       { name: "Pomodoro", href: "/pomodoro", icon: Clock },
     ]
   },
@@ -54,6 +56,8 @@ const navigation: MenuItem[] = [
     icon: Brain,
     children: [
       { name: "Assistant", href: "/assistant", icon: MessageSquare },
+      { name: "AI Metrics", href: "/ai-metrics", icon: BarChart3 },
+      { name: "API Limits", href: "/groq-metrics", icon: Gauge },
       { name: "Memory Insights", href: "/memory-insights", icon: Database },
       { name: "Preferences", href: "/preferences", icon: Settings },
     ]

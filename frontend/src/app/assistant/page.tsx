@@ -4,14 +4,29 @@ import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-import { Send, Sparkles, User, Bot } from 'lucide-react';
+import { Send, Sparkles, User, Bot, Settings2, BarChart3 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { ContextSelector } from '@/components/assistant/ContextSelector';
+import { MetricsDashboard } from '@/components/assistant/MetricsDashboard';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  metrics?: any;
+  mode?: 'smart' | 'direct';
+  intent?: string;
 }
 
 export default function AssistantPage() {
@@ -24,6 +39,12 @@ export default function AssistantPage() {
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [contextTypes, setContextTypes] = useState<string[]>(['tasks', 'expenses', 'study', 'memories']);
+  const [autoDetect, setAutoDetect] = useState(true);
+  const [showMetrics, setShowMetrics] = useState(true); // Toggle metrics dashboard
+  const [lastMetrics, setLastMetrics] = useState<any>(null); // Store last metrics
+  const [lastMode, setLastMode] = useState<'smart' | 'direct'>('smart');
+  const [lastIntent, setLastIntent] = useState<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Auto scroll to bottom when new messages arrive
@@ -46,40 +67,63 @@ export default function AssistantPage() {
     setLoading(true);
 
     try {
-      // Call backend API
+      // Call backend API with context selection
       const response = await fetch('http://localhost:8000/api/assistant/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json', // Important for Laravel to return JSON instead of redirecting
         },
         body: JSON.stringify({
+          user_id: 1, // TODO: Replace with actual user ID from auth
           message: input,
-          history: messages.slice(-10).map(m => ({
+          smart_mode: true, // Enable Smart AI Pipeline (70% token savings)
+          history: messages.slice(-4).map(m => ({ // Reduced from 10 to 4 messages
             role: m.role,
             content: m.content
-          }))
+          })),
+          contextTypes: autoDetect ? null : contextTypes,
+          autoDetect: autoDetect
         }),
       });
 
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
+
       if (!response.ok) {
-        throw new Error('API request failed');
+        const errorText = await response.text();
+        console.error('API Error Response:', errorText);
+        throw new Error(`API request failed with status ${response.status}: ${errorText}`);
       }
 
       const data = await response.json();
+      console.log('API Response data:', data);
+      
+      // Store metrics for dashboard
+      if (data.metrics) {
+        setLastMetrics(data.metrics);
+        setLastMode(data.mode || 'smart');
+        setLastIntent(data.intent || '');
+      }
       
       const aiResponse: Message = {
         role: 'assistant',
         content: data.message || data.response || 'Xin lỗi, tôi không thể trả lời lúc này.',
         timestamp: new Date(),
+        metrics: data.metrics,
+        mode: data.mode,
+        intent: data.intent,
       };
 
       setMessages((prev) => [...prev, aiResponse]);
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Detailed Error:', error);
+      console.error('Error type:', typeof error);
+      console.error('Error message:', error instanceof Error ? error.message : String(error));
       
       const errorMessage: Message = {
         role: 'assistant',
-        content: 'Xin lỗi, đã có lỗi xảy ra khi kết nối với AI. Vui lòng thử lại sau.',
+        content: `Xin lỗi, đã có lỗi xảy ra khi kết nối với AI. Vui lòng thử lại sau.\n\nChi tiết lỗi: ${error instanceof Error ? error.message : 'Unknown error'}`,
         timestamp: new Date(),
       };
       
@@ -93,16 +137,68 @@ export default function AssistantPage() {
     <div className="flex flex-col h-[calc(100vh-4rem)]">
       {/* Header */}
       <div className="border-b border-border pb-6">
-        <div className="flex items-center gap-3">
-          <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
-            <Sparkles className="h-6 w-6 text-primary" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
+              <Sparkles className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold">AI Assistant</h1>
+              <p className="text-sm text-muted-foreground">Groq LLaMA 3.3 70B</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold">AI Assistant</h1>
-            <p className="text-sm text-muted-foreground">Groq LLaMA 3.3 70B</p>
+
+          {/* Header Actions */}
+          <div className="flex items-center gap-2">
+            {/* Metrics Toggle */}
+            <div className="flex items-center gap-2 mr-2">
+              <Switch
+                id="metrics-toggle"
+                checked={showMetrics}
+                onCheckedChange={setShowMetrics}
+              />
+              <Label htmlFor="metrics-toggle" className="cursor-pointer flex items-center gap-1">
+                <BarChart3 className="h-4 w-4" />
+                <span className="text-sm">Metrics</span>
+              </Label>
+            </div>
+
+            {/* Context Settings Sheet */}
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Settings2 className="h-4 w-4 mr-2" />
+                  Context Settings
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-96 overflow-y-auto">
+                <SheetHeader>
+                  <SheetTitle>AI Context Settings</SheetTitle>
+                  <SheetDescription>
+                    Control what data is sent to the AI to optimize token usage and response quality.
+                  </SheetDescription>
+                </SheetHeader>
+                <div className="mt-6">
+                  <ContextSelector
+                    value={contextTypes}
+                    onChange={setContextTypes}
+                    autoMode={autoDetect}
+                    onAutoToggle={setAutoDetect}
+                  />
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </div>
+
+      {/* Metrics Dashboard */}
+      <MetricsDashboard 
+        metrics={lastMetrics}
+        mode={lastMode}
+        intent={lastIntent}
+        isVisible={showMetrics}
+      />
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto py-6 space-y-6">

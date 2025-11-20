@@ -18,6 +18,14 @@ import {
 } from 'chart.js';
 import { Line, Bar, Doughnut } from 'react-chartjs-2';
 
+// Helper function to format VND currency
+const formatVND = (amount: number): string => {
+  return new Intl.NumberFormat('vi-VN', {
+    style: 'currency',
+    currency: 'VND',
+  }).format(amount);
+};
+
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -163,31 +171,31 @@ export default function ExpenseInsightsPage() {
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <Card>
             <CardContent className="pt-6">
-              <div className="text-2xl font-bold">${statistics.mean}</div>
+              <div className="text-2xl font-bold">{formatVND(statistics.mean)}</div>
               <p className="text-xs text-muted-foreground">Daily Average</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
-              <div className="text-2xl font-bold">${statistics.median}</div>
+              <div className="text-2xl font-bold">{formatVND(statistics.median)}</div>
               <p className="text-xs text-muted-foreground">Median</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
-              <div className="text-2xl font-bold">${statistics.min}</div>
+              <div className="text-2xl font-bold">{formatVND(statistics.min)}</div>
               <p className="text-xs text-muted-foreground">Min Daily</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
-              <div className="text-2xl font-bold">${statistics.max}</div>
+              <div className="text-2xl font-bold">{formatVND(statistics.max)}</div>
               <p className="text-xs text-muted-foreground">Max Daily</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
-              <div className="text-2xl font-bold">±${statistics.std_dev}</div>
+              <div className="text-2xl font-bold">±{formatVND(statistics.std_dev)}</div>
               <p className="text-xs text-muted-foreground">Std Deviation</p>
             </CardContent>
           </Card>
@@ -317,16 +325,16 @@ export default function ExpenseInsightsPage() {
                     </span>
                   </div>
                   <div className="flex gap-6 mt-2 text-sm text-muted-foreground">
-                    <span>Total: ${insight.total}</span>
+                    <span>Total: {formatVND(insight.total)}</span>
                     <span>Count: {insight.count}</span>
-                    <span>Avg: ${insight.average}</span>
+                    <span>Avg: {formatVND(insight.average)}</span>
                     <span>Share: {insight.percentage}%</span>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-2xl font-bold">${insight.total}</div>
+                  <div className="text-2xl font-bold">{formatVND(insight.total)}</div>
                   <div className="text-xs text-muted-foreground">
-                    ${insight.smallest_expense} - ${insight.largest_expense}
+                    {formatVND(insight.smallest_expense)} - {formatVND(insight.largest_expense)}
                   </div>
                 </div>
               </div>

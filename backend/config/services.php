@@ -34,6 +34,15 @@ return [
     'groq' => [
         'api_key' => env('GROQ_API_KEY'),
         'model' => env('GROQ_MODEL', 'llama3-70b-8192'),
+        
+        // FreeTier Pipeline Models
+        'models' => [
+            'reasoning' => env('GROQ_MODEL_REASONING', 'llama-3.3-70b-versatile'),
+            'intent' => env('GROQ_MODEL_INTENT', 'groq/compound'),
+            'rewriter' => env('GROQ_MODEL_REWRITER', 'llama-3.1-8b-instant'),
+            'compressor' => env('GROQ_MODEL_COMPRESSOR', 'groq/compound-mini'),
+            'formatter' => env('GROQ_MODEL_FORMATTER', 'allam-2-7b'),
+        ],
     ],
 
 ];

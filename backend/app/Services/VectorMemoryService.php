@@ -132,6 +132,11 @@ class VectorMemoryService
         arsort($wordCount);
         $topWords = array_slice($wordCount, 0, 100, true);
         
+        // Handle empty text case
+        if (empty($topWords)) {
+            return array_fill(0, 100, 0.0);
+        }
+        
         // Normalize
         $max = max($topWords) ?: 1;
         $embedding = array_map(fn($count) => $count / $max, $topWords);

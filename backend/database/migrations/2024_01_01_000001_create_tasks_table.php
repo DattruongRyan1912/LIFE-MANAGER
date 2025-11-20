@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('title');
             $table->enum('priority', ['low', 'medium', 'high'])->default('medium');
-            $table->dateTime('due_at');
+            $table->dateTime('due_at')->nullable();
             $table->integer('estimated_minutes')->nullable();
             $table->boolean('done')->default(false);
             $table->timestamps();

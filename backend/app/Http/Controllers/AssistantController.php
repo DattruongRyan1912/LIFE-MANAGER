@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\AI\SmartAIService;
 use App\Services\ContextBuilder;
 use App\Services\MemoryUpdater;
 use App\Services\VectorMemoryService;
@@ -14,6 +15,7 @@ class AssistantController extends Controller
     protected $contextBuilder;
     protected $memoryUpdater;
     protected $vectorMemory;
+    protected $smartAI;
 
     public function __construct(
         ContextBuilder $contextBuilder, 
@@ -23,33 +25,123 @@ class AssistantController extends Controller
         $this->contextBuilder = $contextBuilder;
         $this->memoryUpdater = $memoryUpdater;
         $this->vectorMemory = $vectorMemory;
+        $this->smartAI = new SmartAIService();
     }
 
     /**
-     * Chat with AI Assistant with vector memory integration
+     * Chat with AI Assistant with vector memory integration (optimized)
      */
     public function chat(Request $request)
     {
         $request->validate([
             'message' => 'required|string|max:2000',
+            'history' => 'sometimes|array|max:4', // Limit history to 4 messages
+            'contextTypes' => 'nullable|array', // e.g. ['tasks', 'expenses', 'study', 'memories'] - can be null
+            'autoDetect' => 'sometimes|boolean', // Auto-detect context types
+            'smartMode' => 'sometimes|boolean', // Use Smart AI Pipeline (default: true)
+            'smart_mode' => 'sometimes|boolean', // Support snake_case
+            'user_id' => 'sometimes|integer', // Optional user_id (for testing without auth)
         ]);
 
         $userMessage = $request->input('message');
+        $history = $request->input('history', []);
+        // Support both camelCase and snake_case
+        $smartMode = $request->input('smartMode') ?? $request->input('smart_mode', true);
         
-        // Build context with vector memory search
-        $context = $this->contextBuilder->build($userMessage);
+        // SMART MODE: Use FreeTier Multi-Model Pipeline
+        if ($smartMode) {
+            try {
+                $result = $this->smartAI->chat(
+                    auth()->id() ?? 1,
+                    $userMessage,
+                    $history
+                );
+                
+                // Update memory
+                $this->memoryUpdater->updateFromConversation($userMessage, $result['response']);
+                $this->storeConversation($userMessage, $result['response']);
+                
+                return response()->json([
+                    'message' => $result['response'],
+                    'mode' => 'smart',
+                    'intent' => $result['intent'],
+                    'metrics' => $result['metrics'],
+                ]);
+                
+            } catch (\Exception $e) {
+                Log::error('Smart AI failed, falling back to direct mode: ' . $e->getMessage());
+                // Fall through to direct mode
+            }
+        }
+        
+        // DIRECT MODE: Traditional approach (fallback)
+        return $this->chatDirect($request);
+    }
+    
+    /**
+     * Direct chat mode (without Smart AI Pipeline)
+     */
+    private function chatDirect(Request $request)
+    {
+        $userMessage = $request->input('message');
+        $history = $request->input('history', []);
+        $autoDetect = $request->input('autoDetect', true);
+        $contextTypes = $request->input('contextTypes', null);
+        
+        // Auto-detect context types if enabled and not explicitly provided
+        if ($autoDetect && !$contextTypes) {
+            $contextTypes = \App\Services\ContextRouter::detectContextTypes($userMessage);
+            Log::info('Auto-detected context types', ['types' => $contextTypes, 'message' => $userMessage]);
+        }
+        
+        // Default to all types if neither auto-detect nor explicit types provided
+        if (!$contextTypes) {
+            $contextTypes = ['tasks', 'expenses', 'study', 'memories'];
+        }
+        
+        // Build context with selected types
+        $context = $this->contextBuilder->build($userMessage, $contextTypes);
+        
+        // Log context size for monitoring
+        $contextSize = strlen(json_encode($context));
+        $systemPrompt = $this->getSystemPrompt($context);
+        $systemPromptSize = strlen($systemPrompt);
 
-        // Prepare messages for Groq
+        // Prepare messages for Groq (with limited history)
         $messages = [
             [
                 'role' => 'system',
-                'content' => $this->getSystemPrompt($context)
-            ],
-            [
-                'role' => 'user',
-                'content' => $userMessage
+                'content' => $systemPrompt
             ]
         ];
+        
+        // Add limited conversation history (max 4 messages = 2 turns)
+        foreach (array_slice($history, 0, 4) as $msg) {
+            if (isset($msg['role']) && isset($msg['content'])) {
+                $messages[] = [
+                    'role' => $msg['role'],
+                    'content' => $msg['content']
+                ];
+            }
+        }
+        
+        // Add current user message
+        $messages[] = [
+            'role' => 'user',
+            'content' => $userMessage
+        ];
+
+        // Log full request payload for debugging
+        Log::info('===== AI REQUEST PAYLOAD =====');
+        Log::info('Messages sent to Groq:', [
+            'message_count' => count($messages),
+            'context_types_used' => $contextTypes,
+            'auto_detect' => $autoDetect,
+            'full_messages' => $messages,
+            'context_data' => $context,
+            'estimated_tokens' => ($contextSize + $systemPromptSize + strlen($userMessage)) / 4
+        ]);
+        Log::info('===== END REQUEST PAYLOAD =====');
 
         // Call Groq API
         try {
@@ -66,12 +158,16 @@ class AssistantController extends Controller
             if ($response->successful()) {
                 $aiResponse = $response->json()['choices'][0]['message']['content'];
                 
-                // Log successful interaction (without sensitive data)
+                // Log successful interaction with size metrics
                 Log::info('AI Chat Success', [
                     'user_message_length' => strlen($userMessage),
                     'ai_response_length' => strlen($aiResponse),
+                    'context_size' => $contextSize,
+                    'system_prompt_size' => $systemPromptSize,
+                    'history_count' => count($history),
                     'model' => config('services.groq.model', 'llama3-70b-8192'),
                     'memories_used' => count($context['relevant_memories'] ?? []),
+                    'tasks_included' => count($context['tasks_today'] ?? []),
                 ]);
                 
                 // Update memory and store conversation
@@ -81,7 +177,8 @@ class AssistantController extends Controller
                 $this->storeConversation($userMessage, $aiResponse);
 
                 return response()->json([
-                    'message' => $aiResponse
+                    'message' => $aiResponse,
+                    'mode' => 'direct',
                 ]);
             } else {
                 Log::error('Groq API Error: ' . $response->body());

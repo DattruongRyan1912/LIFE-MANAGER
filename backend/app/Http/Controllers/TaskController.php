@@ -44,8 +44,12 @@ class TaskController extends Controller
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
             'priority' => 'in:low,medium,high',
-            'due_at' => 'required|date',
+            'due_at' => 'nullable|date',
+            'start_date' => 'nullable|date',
             'estimated_minutes' => 'nullable|integer|min:0',
+            'description' => 'nullable|string',
+            'status' => 'in:backlog,next,in_progress,blocked,done',
+            'task_type' => 'nullable|string|max:50',
             'recurrence_type' => 'in:none,daily,weekly,monthly',
             'recurrence_interval' => 'nullable|integer|min:1',
             'recurrence_end_date' => 'nullable|date|after:due_at',
@@ -56,6 +60,11 @@ class TaskController extends Controller
         }
 
         $data = $validator->validated();
+        
+        // Auto-set start_date to now if not provided (when creating task with due_at)
+        if (!isset($data['start_date']) && isset($data['due_at'])) {
+            $data['start_date'] = Carbon::now()->startOfDay()->toDateTimeString();
+        }
         
         // Auto-suggest Pomodoro count if estimated_minutes is provided
         if (isset($data['estimated_minutes']) && $data['estimated_minutes'] > 0) {
@@ -84,8 +93,12 @@ class TaskController extends Controller
         $validator = Validator::make($request->all(), [
             'title' => 'string|max:255',
             'priority' => 'in:low,medium,high',
-            'due_at' => 'date',
+            'due_at' => 'nullable|date',
+            'start_date' => 'nullable|date',
             'estimated_minutes' => 'nullable|integer|min:0',
+            'description' => 'nullable|string',
+            'status' => 'in:backlog,next,in_progress,blocked,done',
+            'task_type' => 'nullable|string|max:50',
             'done' => 'boolean',
         ]);
 

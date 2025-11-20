@@ -23,7 +23,7 @@ class StudyNoteController extends Controller
      */
     private function getCurrentUserId(): int
     {
-        return auth()->id() ?? 1;
+        return auth()->id() ?? 1 ?? 1;
     }
 
     /**

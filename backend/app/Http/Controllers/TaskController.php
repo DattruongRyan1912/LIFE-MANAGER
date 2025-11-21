@@ -37,6 +37,18 @@ class TaskController extends Controller
     }
 
     /**
+     * Get a single task
+     */
+    public function show(Task $task)
+    {
+        if ($task->user_id !== $this->getUserId()) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        return response()->json($task);
+    }
+
+    /**
      * Create a new task
      */
     public function store(Request $request)
@@ -132,7 +144,28 @@ class TaskController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        $task->update(['done' => !$task->done]);
+        // Toggle logic:
+        // - If task is 'done', revert to task's saved previous_status (or 'in_progress' if not saved)
+        // - If task is NOT 'done', save current status to previous_status, then mark as 'done'
+        if ($task->status === 'done') {
+            // Reverting from done → previous status
+            $newStatus = $task->previous_status ?: 'in_progress';
+            $newPreviousStatus = null; // Clear previous_status when undoing
+        } else {
+            // Marking as done → save current status
+            $newStatus = 'done';
+            $newPreviousStatus = $task->status; // Save current status before changing
+        }
+        
+        $task->update([
+            'status' => $newStatus,
+            'previous_status' => $newPreviousStatus,
+            'done' => $newStatus === 'done', // Keep old field in sync
+        ]);
+        
+        // Refresh to get the updated data
+        $task->refresh();
+        
         return response()->json($task);
     }
 
@@ -225,12 +258,25 @@ class TaskController extends Controller
     /**
      * Get Kanban board data (grouped by status)
      * GET /api/tasks/kanban
+     * 
+     * Sorting logic:
+     * 1. Priority DESC (high -> medium -> low)
+     * 2. Due Date ASC (nearest deadline first, nulls last)
+     * 3. Created Date DESC (newest first)
      */
     public function kanban()
     {
         $tasks = Task::where('user_id', $this->getUserId())
             ->with(['labels', 'childTasks'])
-            ->orderBy('timeline_order')
+            ->orderByRaw("CASE 
+                WHEN priority = 'high' THEN 1 
+                WHEN priority = 'medium' THEN 2 
+                WHEN priority = 'low' THEN 3 
+                ELSE 4 
+            END")
+            ->orderByRaw('CASE WHEN due_at IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('due_at', 'asc')
+            ->orderBy('created_at', 'desc')
             ->get();
 
         $kanban = [

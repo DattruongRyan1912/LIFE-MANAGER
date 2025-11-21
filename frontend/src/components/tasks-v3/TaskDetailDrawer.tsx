@@ -28,6 +28,8 @@ import {
   Tag,
   Link as LinkIcon,
   MessageSquare,
+  CheckCircle2,
+  Circle,
   History,
 } from "lucide-react";
 
@@ -62,6 +64,8 @@ interface TaskDetailDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   onUpdate?: () => void;
+  onSelectTask?: (task: Task) => void; // Navigate to another task
+  onTaskUpdated?: (updatedTask: Task) => void; // Optimistic update single task
 }
 
 const PRIORITY_COLORS = {
@@ -83,6 +87,8 @@ export default function TaskDetailDrawer({
   isOpen,
   onClose,
   onUpdate,
+  onSelectTask,
+  onTaskUpdated,
 }: TaskDetailDrawerProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedTask, setEditedTask] = useState<Task | null>(null);
@@ -159,8 +165,15 @@ export default function TaskDetailDrawer({
       });
 
       if (response.ok) {
+        const updatedTask = await response.json();
         setIsEditing(false);
-        onUpdate?.();
+        
+        // Use optimistic update if available, otherwise fallback to full reload
+        if (onTaskUpdated) {
+          onTaskUpdated(updatedTask);
+        } else {
+          onUpdate?.();
+        }
       }
     } catch (error) {
       console.error("Failed to update task:", error);
@@ -234,19 +247,72 @@ export default function TaskDetailDrawer({
   };
 
   const handleToggleSubtask = async (subtask: Task) => {
+    // Optimistic update - update UI immediately for better UX
+    const optimisticStatus = subtask.status === "done" ? "in_progress" : "done";
+    const optimisticTask = { ...subtask, status: optimisticStatus } as Task;
+    
+    setSubtasks(subtasks.map(st => 
+      st.id === subtask.id ? optimisticTask : st
+    ));
+
     try {
-      await fetch(`${API_BASE_URL}/tasks/${subtask.id}/toggle`, {
+      const response = await fetch(`${API_BASE_URL}/tasks/${subtask.id}/toggle`, {
         method: "PATCH",
       });
-      // Update local state immediately
-      setSubtasks(subtasks.map(st => 
-        st.id === subtask.id 
-          ? { ...st, status: st.status === "done" ? "in_progress" : "done" } as Task
-          : st
-      ));
-      onUpdate?.();
+      
+      if (!response.ok) {
+        // Revert optimistic update on error
+        setSubtasks(subtasks.map(st => 
+          st.id === subtask.id ? subtask : st
+        ));
+        console.error("Failed to toggle subtask");
+      } else {
+        // Notify parent component to update this task optimistically (no re-fetch)
+        // Use our optimistic task, not server response (to avoid double update)
+        if (onTaskUpdated) {
+          onTaskUpdated(optimisticTask);
+        }
+      }
     } catch (error) {
+      // Revert optimistic update on error
+      setSubtasks(subtasks.map(st => 
+        st.id === subtask.id ? subtask : st
+      ));
       console.error("Failed to toggle subtask:", error);
+    }
+  };
+
+  const handleToggleCurrentTask = async () => {
+    if (!task) return;
+    
+    // Optimistic update - determine new status
+    const optimisticStatus: Task["status"] = task.status === "done" ? "in_progress" : "done";
+    const optimisticTask = { ...task, status: optimisticStatus };
+    
+    // Notify parent to update UI immediately
+    if (onTaskUpdated) {
+      onTaskUpdated(optimisticTask);
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/tasks/${task.id}/toggle`, {
+        method: "PATCH",
+      });
+      
+      if (!response.ok) {
+        // Revert on error
+        if (onTaskUpdated) {
+          onTaskUpdated(task);
+        }
+        console.error("Failed to toggle task");
+      }
+      // Don't update again - optimistic update is enough
+    } catch (error) {
+      // Revert on error
+      if (onTaskUpdated) {
+        onTaskUpdated(task);
+      }
+      console.error("Failed to toggle task:", error);
     }
   };
 
@@ -257,6 +323,26 @@ export default function TaskDetailDrawer({
           <SheetTitle className="flex items-center justify-between pr-8">
             <span>Task Details</span>
             <div className="flex items-center gap-2">
+              {/* Toggle Done Button */}
+              <Button 
+                size="sm" 
+                variant={task.status === "done" ? "default" : "outline"}
+                onClick={handleToggleCurrentTask}
+                className="gap-2"
+              >
+                {task.status === "done" ? (
+                  <>
+                    <CheckCircle2 className="h-4 w-4" />
+                    Mark as In Progress
+                  </>
+                ) : (
+                  <>
+                    <Circle className="h-4 w-4" />
+                    Mark as Done
+                  </>
+                )}
+              </Button>
+              
               {isEditing ? (
                 <>
                   <Button size="sm" variant="ghost" onClick={() => setIsEditing(false)}>
@@ -311,7 +397,13 @@ export default function TaskDetailDrawer({
 
           {/* Parent Task Info (if this is a subtask) */}
           {task.parent_task_id && (
-            <div className="p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+            <div className="p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg hover:bg-blue-500/20 transition-colors cursor-pointer"
+              onClick={() => {
+                if (parentTask && onSelectTask) {
+                  onSelectTask(parentTask);
+                }
+              }}
+            >
               <div className="flex items-center gap-2 text-sm">
                 <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -319,7 +411,7 @@ export default function TaskDetailDrawer({
                 <span className="text-blue-400 font-medium">Subtask of:</span>
                 {parentTask ? (
                   <div className="flex items-baseline gap-2">
-                    <span className="text-gray-200 font-medium">{parentTask.title}</span>
+                    <span className="text-gray-200 font-medium hover:text-white transition-colors">{parentTask.title}</span>
                     <span className="text-xs text-gray-400">#{parentTask.id}</span>
                   </div>
                 ) : (
@@ -512,20 +604,33 @@ export default function TaskDetailDrawer({
                 subtasks.map((subtask) => (
                   <Card 
                     key={subtask.id} 
-                    className="p-3 ml-4 border-l-2 border-l-blue-500/50 bg-gray-800/30"
+                    className="p-3 ml-4 border-l-2 border-l-blue-500/50 bg-gray-800/30 hover:bg-gray-800/50 transition-all duration-200 cursor-pointer"
+                    onClick={(e) => {
+                      // Don't navigate if clicking the checkbox
+                      if ((e.target as HTMLElement).closest('button')) {
+                        return;
+                      }
+                      if (onSelectTask) {
+                        onSelectTask(subtask);
+                      }
+                    }}
                   >
                     <div className="flex items-center gap-3">
                       <svg className="w-3 h-3 text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                       </svg>
                       <button
-                        onClick={() => handleToggleSubtask(subtask)}
-                        className="shrink-0"
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent card click
+                          handleToggleSubtask(subtask);
+                        }}
+                        className="shrink-0 hover:scale-110 active:scale-95 transition-transform duration-150"
+                        title={subtask.status === "done" ? "Mark as not done" : "Mark as done"}
                       >
                         {subtask.status === "done" ? (
                           <Check className="h-4 w-4 text-green-600" />
                         ) : (
-                          <div className="h-4 w-4 border-2 border-muted-foreground rounded" />
+                          <div className="h-4 w-4 border-2 border-muted-foreground rounded hover:border-green-600 transition-colors" />
                         )}
                       </button>
                       <span
@@ -537,6 +642,7 @@ export default function TaskDetailDrawer({
                       >
                         {subtask.title}
                       </span>
+                      <span className="text-xs text-gray-500">#{subtask.id}</span>
                       {subtask.priority && (
                         <div
                           className={`h-2 w-2 rounded-full ${

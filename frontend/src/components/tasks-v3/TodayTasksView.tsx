@@ -5,14 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, GripVertical, Calendar } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { CreateTaskDialog } from "./CreateTaskDialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -71,13 +64,8 @@ export default function TodayTasksView() {
   const [loading, setLoading] = useState(true);
   const [draggedTaskId, setDraggedTaskId] = useState<number | null>(null);
 
-  // Create Task Dialog States
+  // Create Task Dialog State
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [newTitle, setNewTitle] = useState("");
-  const [newDescription, setNewDescription] = useState("");
-  const [newPriority, setNewPriority] = useState<"low" | "medium" | "high">("medium");
-  const [newDueDate, setNewDueDate] = useState("");
-  const [newEstimatedMinutes, setNewEstimatedMinutes] = useState("");
 
   // Task Detail Drawer
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -191,69 +179,9 @@ export default function TodayTasksView() {
     setDraggedTaskId(null);
   };
 
-  const handleCreateTask = async () => {
-    if (!newTitle.trim()) return;
-
-    // Set due_at to today at current time
-    const today = new Date();
-    const dueAtValue = newDueDate || today.toISOString();
-
-    const tempTask: Task = {
-      id: Date.now() * -1,
-      title: newTitle + " (creating...)",
-      description: newDescription || undefined,
-      status: "next",
-      priority: newPriority,
-      due_at: dueAtValue,
-      estimated_minutes: newEstimatedMinutes ? parseInt(newEstimatedMinutes) : undefined,
-    };
-
-    setKanbanData((prev) => ({
-      ...prev,
-      next: [...prev.next, tempTask],
-    }));
-
+  const handleTaskCreated = () => {
     setIsCreateDialogOpen(false);
-    setNewTitle("");
-    setNewDescription("");
-    setNewPriority("medium");
-    setNewDueDate("");
-    setNewEstimatedMinutes("");
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/tasks`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: newTitle,
-          description: newDescription || undefined,
-          priority: newPriority,
-          status: "next",
-          due_at: dueAtValue,
-          estimated_minutes: newEstimatedMinutes ? parseInt(newEstimatedMinutes) : undefined,
-          user_id: 1,
-        }),
-      });
-
-      if (response.ok) {
-        const newTask = await response.json();
-        setKanbanData((prev) => ({
-          ...prev,
-          next: prev.next.map((t) => (t.id === tempTask.id ? newTask : t)),
-        }));
-      } else {
-        setKanbanData((prev) => ({
-          ...prev,
-          next: prev.next.filter((t) => t.id !== tempTask.id),
-        }));
-      }
-    } catch (error) {
-      console.error("Failed to create task:", error);
-      setKanbanData((prev) => ({
-        ...prev,
-        next: prev.next.filter((t) => t.id !== tempTask.id),
-      }));
-    }
+    loadTodayTasks();
   };
 
   if (loading) {
@@ -276,91 +204,12 @@ export default function TodayTasksView() {
   return (
     <>
       {/* Create Task Dialog */}
-      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create New Task for Today</DialogTitle>
-            <DialogDescription>
-              Add a new task to your today's schedule
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">Title *</Label>
-              <Input
-                id="title"
-                placeholder="Task title..."
-                value={newTitle}
-                onChange={(e) => setNewTitle(e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                placeholder="Task description..."
-                rows={3}
-                value={newDescription}
-                onChange={(e) => setNewDescription(e.target.value)}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="priority">Priority</Label>
-                <Select
-                  value={newPriority}
-                  onValueChange={(v) => setNewPriority(v as any)}
-                >
-                  <SelectTrigger id="priority">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="estimated">Estimated (minutes)</Label>
-                <Input
-                  id="estimated"
-                  type="number"
-                  placeholder="60"
-                  value={newEstimatedMinutes}
-                  onChange={(e) => setNewEstimatedMinutes(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="dueDate">Due Time (optional)</Label>
-              <Input
-                id="dueDate"
-                type="datetime-local"
-                value={newDueDate}
-                onChange={(e) => setNewDueDate(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setIsCreateDialogOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button onClick={handleCreateTask} disabled={!newTitle.trim()}>
-              Create Task
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <CreateTaskDialog
+        open={isCreateDialogOpen}
+        onOpenChange={setIsCreateDialogOpen}
+        defaultStatus="next"
+        onTaskCreated={handleTaskCreated}
+      />
 
       {/* Main Content */}
       <div className="space-y-4">
@@ -376,14 +225,10 @@ export default function TodayTasksView() {
             </div>
           </div>
 
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="gap-2">
-                <Plus className="h-4 w-4" />
-                Add Task
-              </Button>
-            </DialogTrigger>
-          </Dialog>
+          <Button className="gap-2" onClick={() => setIsCreateDialogOpen(true)}>
+            <Plus className="h-4 w-4" />
+            Add Task
+          </Button>
         </div>
 
         {/* Stats */}

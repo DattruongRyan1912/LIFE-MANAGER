@@ -323,6 +323,23 @@ class TaskController extends Controller
     }
 
     /**
+     * Get subtasks for a task
+     * GET /api/tasks/{task}/subtasks
+     */
+    public function getSubtasks(Task $task)
+    {
+        if ($task->user_id !== $this->getUserId()) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $subtasks = Task::where('parent_task_id', $task->id)
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        return response()->json($subtasks);
+    }
+
+    /**
      * Create subtask
      * POST /api/tasks/{task}/subtasks
      */

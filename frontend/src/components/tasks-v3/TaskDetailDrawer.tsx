@@ -88,6 +88,49 @@ export default function TaskDetailDrawer({
   const [editedTask, setEditedTask] = useState<Task | null>(null);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
   const [newNote, setNewNote] = useState("");
+  const [parentTask, setParentTask] = useState<Task | null>(null);
+  const [subtasks, setSubtasks] = useState<Task[]>([]);
+
+  // Fetch parent task if this is a subtask
+  useEffect(() => {
+    const fetchParentTask = async () => {
+      if (task?.parent_task_id) {
+        try {
+          const response = await fetch(`${API_BASE_URL}/tasks/${task.parent_task_id}`);
+          if (response.ok) {
+            const data = await response.json();
+            setParentTask(data);
+          }
+        } catch (error) {
+          console.error("Failed to fetch parent task:", error);
+        }
+      } else {
+        setParentTask(null);
+      }
+    };
+
+    fetchParentTask();
+  }, [task?.parent_task_id]);
+
+  // Fetch subtasks if this is a parent task
+  useEffect(() => {
+    const fetchSubtasks = async () => {
+      if (task?.id) {
+        try {
+          const response = await fetch(`${API_BASE_URL}/tasks/${task.id}/subtasks`);
+          if (response.ok) {
+            const data = await response.json();
+            setSubtasks(data);
+          }
+        } catch (error) {
+          console.error("Failed to fetch subtasks:", error);
+          setSubtasks([]);
+        }
+      }
+    };
+
+    fetchSubtasks();
+  }, [task?.id]);
 
   useEffect(() => {
     if (task) {
@@ -180,6 +223,8 @@ export default function TaskDetailDrawer({
       });
 
       if (response.ok) {
+        const newSubtask = await response.json();
+        setSubtasks([...subtasks, newSubtask]); // Add to local state immediately
         setNewSubtaskTitle("");
         onUpdate?.();
       }
@@ -193,6 +238,12 @@ export default function TaskDetailDrawer({
       await fetch(`${API_BASE_URL}/tasks/${subtask.id}/toggle`, {
         method: "PATCH",
       });
+      // Update local state immediately
+      setSubtasks(subtasks.map(st => 
+        st.id === subtask.id 
+          ? { ...st, status: st.status === "done" ? "in_progress" : "done" } as Task
+          : st
+      ));
       onUpdate?.();
     } catch (error) {
       console.error("Failed to toggle subtask:", error);
@@ -251,7 +302,10 @@ export default function TaskDetailDrawer({
                 }
               />
             ) : (
-              <h3 className="text-lg font-semibold">{task.title}</h3>
+              <div className="flex items-baseline gap-2">
+                <h3 className="text-lg font-semibold">{task.title}</h3>
+                <span className="text-xs text-gray-500">#{task.id}</span>
+              </div>
             )}
           </div>
 
@@ -263,7 +317,14 @@ export default function TaskDetailDrawer({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
                 <span className="text-blue-400 font-medium">Subtask of:</span>
-                <span className="text-gray-200">Task #{task.parent_task_id}</span>
+                {parentTask ? (
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-gray-200 font-medium">{parentTask.title}</span>
+                    <span className="text-xs text-gray-400">#{parentTask.id}</span>
+                  </div>
+                ) : (
+                  <span className="text-gray-400 italic">Loading parent task...</span>
+                )}
               </div>
             </div>
           )}
@@ -441,14 +502,14 @@ export default function TaskDetailDrawer({
             <div className="flex items-center justify-between">
               <Label className="text-base font-semibold">Subtasks</Label>
               <Badge variant="secondary">
-                {task.subtasks?.filter((s) => s.status === "done").length || 0} /{" "}
-                {task.subtasks?.length || 0}
+                {subtasks.filter((s) => s.status === "done").length} /{" "}
+                {subtasks.length}
               </Badge>
             </div>
 
             <div className="space-y-2">
-              {task.subtasks && task.subtasks.length > 0 ? (
-                task.subtasks.map((subtask) => (
+              {subtasks.length > 0 ? (
+                subtasks.map((subtask) => (
                   <Card 
                     key={subtask.id} 
                     className="p-3 ml-4 border-l-2 border-l-blue-500/50 bg-gray-800/30"

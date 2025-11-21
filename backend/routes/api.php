@@ -47,6 +47,7 @@ Route::get('/tasks/kanban', [TaskController::class, 'kanban']);
 Route::get('/tasks/calendar', [TaskController::class, 'calendar']);
 Route::patch('/tasks/{task}/status', [TaskController::class, 'updateStatus']);
 Route::patch('/tasks/{task}/calendar-move', [TaskController::class, 'calendarMove']);
+Route::get('/tasks/{task}/subtasks', [TaskController::class, 'getSubtasks']);
 Route::post('/tasks/{task}/subtasks', [TaskController::class, 'createSubtask']);
 
 Route::apiResource('tasks', TaskController::class);
